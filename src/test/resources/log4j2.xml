@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %c{-3} - %msg%n"/>
+        </Console>
+        <!--<File name="LogFile" filename="output.log">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %c{-3} - %msg%n" charset="utf-8"/>
+        </File>-->
+    </Appenders>
+    <Loggers>
+        <Logger name="com.incarcloud.rooster" level="DEBUG"/>
+        <Root level="WARN">
+            <AppenderRef ref="Console"/>
+            <!--<AppenderRef ref="LogFile"/>-->
+        </Root>
+    </Loggers>
+</Configuration>

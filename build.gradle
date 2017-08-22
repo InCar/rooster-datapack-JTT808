@@ -1,0 +1,45 @@
+group 'com.incarcloud'
+version '2.0'
+
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    if (project.hasProperty("maven")) {
+        if (maven.equals("maven.aliyun.com"))
+            maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
+        else
+            mavenCentral()
+    } else {
+        mavenCentral()
+    }
+}
+
+dependencies {
+    compile("org.slf4j:slf4j-api:1.7.+")
+    compile project("rooster-shared")
+    testCompile("junit:junit:4.+")
+    testRuntime("org.apache.logging.log4j:log4j-slf4j-impl:2.8.+")
+    testRuntime("org.apache.logging.log4j:log4j-core:2.8.+")
+}
+
+compileJava{
+    options.encoding = "utf-8"
+    options.compilerArgs << "-Xlint:unchecked"
+}
+
+compileTestJava{
+    options.encoding = "utf-8"
+    options.compilerArgs << "-Xlint:unchecked"
+}
+
+test{
+    testLogging {
+        events "passed", "skipped", "failed"
+        showStandardStreams = true
+    }
+}
+
+defaultTasks "build"
