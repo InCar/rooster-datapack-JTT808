@@ -1,0 +1,3 @@
+[submodule "rooster-shared"]
+	path = rooster-shared
+	url = https://github.com/InCar/rooster-shared

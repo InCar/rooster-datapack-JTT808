@@ -1,0 +1,16 @@
+language: java
+
+jdk:
+    - oraclejdk8
+
+branches:
+    only:
+        - master
+        - dev
+
+cache:
+    directories:
+        - $HOME/.gradle
+
+script:
+    - gradle check -Dspring.profiles.active=travis
