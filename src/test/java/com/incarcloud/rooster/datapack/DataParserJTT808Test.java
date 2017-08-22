@@ -20,11 +20,8 @@ public class DataParserJTT808Test {
     /**
      * Logger
      */
-    private static final Logger logger = LoggerFactory.getLogger(DataParserJTT808Test.class);
+    private static Logger logger = LoggerFactory.getLogger(DataParserJTT808Test.class);
 
-    /**
-     * Data
-     */
     private ByteBuf buffer;
 
     @Before
