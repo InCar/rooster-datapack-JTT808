@@ -81,7 +81,8 @@ public class DataParserJTT808 implements IDataParser {
                     break;
                 }
 
-                // 转义还原字节码，转移规则：0x7D0x01->0x7D, 0x7D0x02->0x7E
+                // 转义还原字节码
+                // 还原规则：0x7D0x01->0x7D, 0x7D0x02->0x7E
                 byteList = new ArrayList<>();
                 for(int i = start + 1; i < offset - 1; i++) {
                     if(0x7D == (buffer.getByte(i) & 0xFF) && 0x01 == (buffer.getByte(i+1) & 0xFF)) {
@@ -130,25 +131,50 @@ public class DataParserJTT808 implements IDataParser {
      * 验证数据包
      *
      * @param bytes 原始数据
-     * @return
+     * @return 返回转义还原的字节数组
      */
-    private boolean validate(byte[] bytes) {
+    private byte[] validate(byte[] bytes) {
         if(null != bytes && 2 < bytes.length) {
             // 标识位(0x7e)
-            int length = bytes.length;
-            if(0x7E == (bytes[0] & 0xFF) && 0x7E == (bytes[length-1] & 0xFF)) {
+            if(0x7E == (bytes[0] & 0xFF) && 0x7E == (bytes[bytes.length-1] & 0xFF)) {
+                // 转义还原字节码
+                // 还原规则：0x7D0x01->0x7D, 0x7D0x02->0x7E
+                List<Byte> byteList = new ArrayList<>();
+                byteList.add(bytes[0]); // 标识位(0x7E)
+                for(int i = 1; i < bytes.length - 1; i++) {
+                    if(0x7D == (bytes[i] & 0xFF) && 0x01 == (bytes[i+1] & 0xFF)) {
+                        // 0x7D0x01->0x7D
+                        byteList.add((byte) 0x7D);
+                        i++;
+                    } else if(0x7D == (bytes[i] & 0xFF) && 0x02 == (bytes[i+1] & 0xFF)) {
+                        // 0x7D0x02->0x7E
+                        byteList.add((byte) 0x7E);
+                        i++;
+                    } else {
+                        byteList.add(bytes[i]);
+                    }
+                }
+                byteList.add(bytes[bytes.length-1]); // 标识位(0x7E)
+
+                // List<Byte> --> byte[]
+                byte[] shiftBytes = new byte[byteList.size()];
+                for (int i = 0; i < shiftBytes.length; i++) {
+                    shiftBytes[i] = byteList.get(i).byteValue();
+                }
+
                 // 计算校验码
                 byte check = 0x00;
-                for(int i = 1; i <= length - 3; i++) {
-                    check ^= bytes[i];
+                for(int i = 1; i <= shiftBytes.length - 3; i++) {
+                    check ^= shiftBytes[i];
                 }
+
                 // 验证校验码
-                if(bytes[length - 2] == check) {
-                    return true;
+                if(shiftBytes[shiftBytes.length - 2] == check) {
+                    return shiftBytes;
                 }
             }
         }
-        return false;
+        return null;
     }
 
     @Override
@@ -165,8 +191,8 @@ public class DataParserJTT808 implements IDataParser {
     public List<DataPackTarget> extractBody(DataPack dataPack) {
         ByteBuf buffer = null;
         List<DataPackTarget> dataPackTargetList = null;
-        byte[] dataPackBytes = Base64.getDecoder().decode(dataPack.getDataB64());
-        if(validate(dataPackBytes)) {
+        byte[] dataPackBytes = validate(Base64.getDecoder().decode(dataPack.getDataB64()));
+        if(null != dataPackBytes) {
             try {
                 // 初始化ByteBuf
                 buffer = Unpooled.wrappedBuffer(dataPackBytes);
