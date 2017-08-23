@@ -60,6 +60,7 @@ public class DataParserJTT808 implements IDataParser {
         // 遍历
         byte check;
         int start, offset;
+        List<Byte> byteList;
         while (buffer.isReadable()) {
             // 初始化
             start = buffer.readerIndex();
@@ -80,11 +81,27 @@ public class DataParserJTT808 implements IDataParser {
                     break;
                 }
 
+                // 转义还原字节码，转移规则：0x7D0x01->0x7D, 0x7D0x02->0x7E
+                byteList = new ArrayList<>();
+                for(int i = start + 1; i < offset - 1; i++) {
+                    if(0x7D == (buffer.getByte(i) & 0xFF) && 0x01 == (buffer.getByte(i+1) & 0xFF)) {
+                        // 0x7D0x01->0x7D
+                        byteList.add((byte) 0x7D);
+                        i++;
+                    } else if(0x7D == (buffer.getByte(i) & 0xFF) && 0x02 == (buffer.getByte(i+1) & 0xFF)) {
+                        // 0x7D0x02->0x7E
+                        byteList.add((byte) 0x7E);
+                        i++;
+                    } else {
+                        byteList.add(buffer.getByte(i));
+                    }
+                }
+
                 // 计算校验码
                 check = 0x00;
-                for(int i = start + 1; i <= offset - 2; i++) {
+                for (Byte b: byteList) {
                     // 校验码指从消息头开始，同后一字节异或，直到校验码前一个字节
-                    check ^= buffer.getByte(i);
+                    check ^= b.byteValue();
                 }
 
                 // 验证校验码
@@ -107,16 +124,6 @@ public class DataParserJTT808 implements IDataParser {
         }
 
         return dataPackList;
-    }
-
-    @Override
-    public ByteBuf createResponse(DataPack requestPack, ERespReason reason) {
-        return null;
-    }
-
-    @Override
-    public void destroyResponse(ByteBuf responseBuf) {
-
     }
 
     /**
@@ -142,6 +149,16 @@ public class DataParserJTT808 implements IDataParser {
             }
         }
         return false;
+    }
+
+    @Override
+    public ByteBuf createResponse(DataPack requestPack, ERespReason reason) {
+        return null;
+    }
+
+    @Override
+    public void destroyResponse(ByteBuf responseBuf) {
+
     }
 
     @Override
