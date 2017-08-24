@@ -43,6 +43,45 @@ public class JTT808DataPackUtil extends DataPackUtil {
         return readUInt4(buffer);
     }
 
+    /**
+     * 读取默认6个字节BCD码字符串数据<br>
+     *     使用复合BCD码，一个字节表示2个十进制数字
+     *
+     * @param buffer ByteBuf
+     * @return
+     */
+    public static String readBCD(ByteBuf buffer) {
+        return readBCD(buffer, 6);
+    }
+
+    /**
+     * 读取指定长度BCD码字符串数据<br>
+     *     使用复合BCD码，一个字节表示2个十进制数字
+     *
+     * @param buffer ByteBuf
+     * @param length 指定长度
+     * @return
+     */
+    public static String readBCD(ByteBuf buffer, int length) {
+        if(null == buffer) {
+            throw new IllegalArgumentException("buffer is null");
+        }
+        if(0 > length) {
+            throw new IllegalArgumentException("length is illegal");
+        }
+        if(0 < length) {
+            int number;
+            StringBuffer stringBuffer = new StringBuffer();
+            for (int i = 0; i < length; i++) {
+                number = readByte(buffer);
+                stringBuffer.append(number >> 4 & 0x0F);
+                stringBuffer.append(number & 0x0F);
+            }
+            return stringBuffer.toString();
+        }
+        return null;
+    }
+
     protected JTT808DataPackUtil() {
         super();
     }

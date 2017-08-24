@@ -205,6 +205,7 @@ public class DataParserJTT808 implements IDataParser {
                 // 1.消息ID
                 int msgId = JTT808DataPackUtil.readWord(buffer);
                 System.out.println("msgId: " + msgId);
+
                 // 2.消息体属性
                 int msgProps = JTT808DataPackUtil.readWord(buffer);
                 // 2.1 消息体长度
@@ -225,7 +226,24 @@ public class DataParserJTT808 implements IDataParser {
                 // 2.3 分包
                 int msgSubPack = (msgProps >> 13) & 0x0001;
                 System.out.println("msgSubPack: " + msgSubPack);
+                switch (msgSubPack) {
+                    case 0:
+                        // 第 13 位为 0，则消息头中无消息包封装项字段
+                        System.out.println("--无消息包封装项字段");
+                        break;
+                    case 1:
+                        // 第 13 位为 1 时表示消息体为长消息，进行分包发送处理
+                        System.out.println("--分包发送处理");
+                        break;
+                }
 
+                // 3.终端手机号(设备号)
+                String deviceId = JTT808DataPackUtil.readBCD(buffer);
+                System.out.println("deviceId: " + deviceId);
+
+                // 4.消息流水号
+                int msgSeq = JTT808DataPackUtil.readWord(buffer);
+                System.out.println("msgSeq: " + msgSeq);
 
                 /* 消息体 */
                 switch (msgId) {
@@ -240,6 +258,7 @@ public class DataParserJTT808 implements IDataParser {
                     case 0x0002:
                         /* 终端心跳 */
                         System.out.println("## 0x0002 - 终端心跳");
+                        // 已解析，只有消息头
                         break;
                     case 0x8003:
                         /* 补传分包请求 */
