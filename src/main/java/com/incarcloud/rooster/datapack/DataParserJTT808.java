@@ -2,6 +2,7 @@ package com.incarcloud.rooster.datapack;
 
 import com.incarcloud.rooster.util.JTT808DataPackUtil;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.util.ReferenceCountUtil;
 
@@ -176,7 +177,68 @@ public class DataParserJTT808 implements IDataParser {
 
     @Override
     public ByteBuf createResponse(DataPack requestPack, ERespReason reason) {
-        return null;
+        // 发送消息时：消息封装——>计算并填充校验码——>转义
+        // 0x7e-0x7d02, 0x7d-0x7d01
+        ByteBuf buffer = null;
+        if(null != requestPack && null != reason) {
+            // 原始数据
+            byte[] dataPackBytes = validate(Base64.getDecoder().decode(requestPack.getDataB64()));
+            if(null != dataPackBytes) {
+                // 初始化List容器，装载【消息头+消息体】
+                List<Byte> byteList = new ArrayList<>();
+
+                // 设置回复命令字
+                byteList.add((byte) 0x80);
+                byteList.add((byte) 0x01);
+
+                // 设置消息长度：平台通用应答回复5个字节：【应答流水号】+【应答 ID】+【结果】
+                // 双字节，最后9个bit表示消息长度，所以&0xFE00在&0x05
+                int msgProps = (((dataPackBytes[3] & 0xFF) << 8) & (dataPackBytes[4] & 0xFF) & 0xFE00) & 0x05;
+                byteList.add((byte) ((msgProps >> 8) & 0xFF));
+                byteList.add((byte) (msgProps & 0xFF));
+
+                // 设置终端手机号(6个字节BCD码)，5~10
+                for (int i = 5; i <= 10; i++) {
+                    byteList.add(dataPackBytes[i]);
+                }
+
+                // 设置消息流水号，同终端消息的流水号
+                byteList.add(dataPackBytes[11]);
+                byteList.add(dataPackBytes[12]);
+
+                // 设置对应的终端消息的流水号
+                byteList.add(dataPackBytes[11]);
+                byteList.add(dataPackBytes[12]);
+
+                // 设置对应的终端消息的ID
+                byteList.add(dataPackBytes[1]);
+                byteList.add(dataPackBytes[2]);
+
+                // 设置结果
+                // 结果说明：0：成功/确认；1：失败；2：消息有误；3：不支持；4：报警处理确认；
+                byte responseByte;
+                switch (reason) {
+                    case OK:
+                        // 成功接收
+                        responseByte = 0x00;
+                        break;
+                    default:
+                        // 其他
+                        responseByte = 0x01;
+                }
+                byteList.add(responseByte);
+
+                // 计算并填充校验码
+                byte check = 0x00;
+                for (Byte byteObject: byteList) {
+                    check ^= byteObject.byteValue();
+                    System.out.print(ByteBufUtil.hexDump(new byte[]{byteObject}).toUpperCase());
+                }
+                System.out.println();
+                System.out.println(ByteBufUtil.hexDump(new byte[]{check}));
+            }
+        }
+        return buffer;
     }
 
     @Override
