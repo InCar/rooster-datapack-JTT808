@@ -60,7 +60,7 @@ public class DataParserJTT808Test {
 
     @Test
     public void testExtractBody() {
-        DataPack dataPack = parser.extract(buffer).get(0);
+        DataPack dataPack = parser.extract(buffer).get(1);
         parser.extractBody(dataPack);
     }
 

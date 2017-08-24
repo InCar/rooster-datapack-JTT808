@@ -2,6 +2,10 @@ package com.incarcloud.rooster.util;
 
 import io.netty.buffer.ByteBuf;
 
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * JTT808 DataPack工具类
  *
@@ -66,9 +70,6 @@ public class JTT808DataPackUtil extends DataPackUtil {
         if(null == buffer) {
             throw new IllegalArgumentException("buffer is null");
         }
-        if(0 > length) {
-            throw new IllegalArgumentException("length is illegal");
-        }
         if(0 < length) {
             int number;
             StringBuffer stringBuffer = new StringBuffer();
@@ -80,6 +81,50 @@ public class JTT808DataPackUtil extends DataPackUtil {
             return stringBuffer.toString();
         }
         return null;
+    }
+
+    /**
+     * 读取指定长度字节数组数据
+     *
+     * @param buffer ByteBuf
+     * @param length 指定长度
+     * @return
+     */
+    public static String readByteArray(ByteBuf buffer, int length) {
+        if(null == buffer) {
+            throw new IllegalArgumentException("buffer is null");
+        }
+        if(0 < length) {
+            // 去掉0x00无法解析的byte
+            byte b;
+            List<Byte> byteList = new ArrayList<>();
+            for (int i = 0; i < length; i++) {
+                b = buffer.readByte();
+                if(0x00 != b) {
+                    byteList.add(b);
+                }
+            }
+            // List<Byte> --> byte[]
+            byte[] stringBytes = new byte[byteList.size()];
+            for (int i = 0; i < stringBytes.length; i++) {
+                stringBytes[i] = byteList.get(i).byteValue();
+            }
+            return new String(stringBytes);
+        }
+        return null;
+    }
+
+    /**
+     * 读取字符串
+     *
+     * @param buffer ByteBuf
+     * @return gbk string
+     * @throws UnsupportedEncodingException
+     */
+    public static String readString(ByteBuf buffer) throws UnsupportedEncodingException {
+        byte[] stringBytes = new byte[buffer.readableBytes() - 2];
+        buffer.readBytes(stringBytes);
+        return new String(stringBytes, "GBK");
     }
 
     protected JTT808DataPackUtil() {

@@ -267,6 +267,34 @@ public class DataParserJTT808 implements IDataParser {
                     case 0x0100:
                         /* 终端注册 */
                         System.out.println("## 0x0100 - 终端注册");
+                        int provinceId = JTT808DataPackUtil.readWord(buffer);
+                        System.out.println("provinceId: " + provinceId);
+                        int cityId = JTT808DataPackUtil.readWord(buffer);
+                        System.out.println("cityId: " + cityId);
+                        String manufacturerId = JTT808DataPackUtil.readByteArray(buffer, 5);
+                        System.out.println("manufacturerId: " + manufacturerId);
+                        String terminalModel = JTT808DataPackUtil.readByteArray(buffer, 20);
+                        System.out.println("terminalModel: " + terminalModel);
+                        String terminalId = JTT808DataPackUtil.readByteArray(buffer, 7);
+                        System.out.println("terminalId: " + terminalId);
+                        int colorId = JTT808DataPackUtil.readByte(buffer);
+                        System.out.println("colorId: " + colorId);
+                        switch (colorId) {
+                            case 0:
+                                // 未上牌时，取值为 0
+                                break;
+                            default:
+                                // 车辆颜色
+                        }
+                        // 车辆标识
+                        String vin = JTT808DataPackUtil.readString(buffer);
+                        if(0 == colorId) {
+                            // VIN
+                            System.out.println("vin: " + vin);
+                        } else  {
+                            // License
+                            System.out.println("License: " + vin);
+                        }
                         break;
                     case 0x8100:
                         /* 终端注册应答 */
