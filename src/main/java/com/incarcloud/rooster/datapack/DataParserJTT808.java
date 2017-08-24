@@ -5,10 +5,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.util.ReferenceCountUtil;
 
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * JTT808 Parser.
@@ -347,6 +344,24 @@ public class DataParserJTT808 implements IDataParser {
                     case 0x0200:
                         /* 位置信息汇报 */
                         System.out.println("## 0x0200 - 位置信息汇报");
+                        // 1.位置基本信息
+                        long alarmProps = JTT808DataPackUtil.readDWord(buffer);
+                        System.out.println("alarmProps: " + alarmProps);
+                        long statusProps = JTT808DataPackUtil.readDWord(buffer);
+                        System.out.println("statusProps: " + statusProps);
+                        double longitude = JTT808DataPackUtil.readLongitude(buffer, statusProps);
+                        System.out.println("longitude: " + longitude);
+                        double latitude = JTT808DataPackUtil.readLatitude(buffer, statusProps);
+                        System.out.println("latitude: " + latitude);
+                        int altitude = JTT808DataPackUtil.readWord(buffer);
+                        System.out.println("altitude: " + altitude);
+                        float speed = JTT808DataPackUtil.readSpeed(buffer);
+                        System.out.println("speed: " + speed);
+                        float direction = JTT808DataPackUtil.readWord(buffer);
+                        System.out.println("direction: " + direction);
+                        Date positionTime = JTT808DataPackUtil.readDate(buffer);
+                        System.out.println("positionTime: " + positionTime);
+                        // 2.位置附加信息项列表（可没有，根据消息头中的长度字段确定）
                         break;
                     case 0x8201:
                         /* 位置信息查询 */
