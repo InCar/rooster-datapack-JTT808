@@ -147,6 +147,16 @@ public class JTT808DataPackUtil extends DataPackUtil {
     }
 
     /**
+     * 位置数据精确度
+     */
+    private static final int POSITION_DATA_SCALE = 6;
+
+    /**
+     * 位置数据单位掩码
+     */
+    private static final double POSITION_UNIT_MASK = 10e+5;
+
+    /**
      * 浮点型精度补偿，保存6位小数点
      *
      * @param value 数值
@@ -156,7 +166,7 @@ public class JTT808DataPackUtil extends DataPackUtil {
         if(null == value) {
             throw new IllegalArgumentException("value is null");
         }
-        return value.divide(BigDecimal.ONE, 7, BigDecimal.ROUND_HALF_UP);
+        return value.divide(BigDecimal.ONE, POSITION_DATA_SCALE, BigDecimal.ROUND_HALF_UP);
     }
 
     /**
@@ -174,11 +184,11 @@ public class JTT808DataPackUtil extends DataPackUtil {
         switch (flag) {
             case 0:
                 // 0：东经
-                number = divideScale6(new BigDecimal(bigInt / 10e+6));
+                number = divideScale6(new BigDecimal(bigInt / POSITION_UNIT_MASK));
                 break;
             case 1:
                 // 1：西经
-                number = divideScale6(new BigDecimal(bigInt / 10e+6 * -1));
+                number = divideScale6(new BigDecimal(bigInt / POSITION_UNIT_MASK * -1));
                 break;
         }
         return number.doubleValue();
@@ -199,11 +209,11 @@ public class JTT808DataPackUtil extends DataPackUtil {
         switch (flag) {
             case 0:
                 // 0：北纬
-                number = divideScale6(new BigDecimal(bigInt / 10e+6));
+                number = divideScale6(new BigDecimal(bigInt / POSITION_UNIT_MASK));
                 break;
             case 1:
                 // 1：南纬
-                number = divideScale6(new BigDecimal(bigInt / 10e+6 * -1));
+                number = divideScale6(new BigDecimal(bigInt / POSITION_UNIT_MASK * -1));
                 break;
         }
         return number.doubleValue();
