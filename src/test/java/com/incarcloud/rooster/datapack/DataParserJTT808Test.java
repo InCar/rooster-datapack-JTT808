@@ -1,6 +1,7 @@
 package com.incarcloud.rooster.datapack;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.util.ReferenceCountUtil;
 import org.junit.After;
@@ -55,7 +56,7 @@ public class DataParserJTT808Test {
     @Test
     public void testCreateResponse() {
         List<DataPack> dataPackList = parser.extract(buffer);
-        System.out.println(parser.createResponse(dataPackList.get(0), ERespReason.OK));
+        Assert.assertEquals("7E800100050133003127071BFF1BFF000200A57E", ByteBufUtil.hexDump(parser.createResponse(dataPackList.get(0), ERespReason.OK)).toUpperCase());
     }
 
     @Test

@@ -2,7 +2,6 @@ package com.incarcloud.rooster.datapack;
 
 import com.incarcloud.rooster.util.JTT808DataPackUtil;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.util.ReferenceCountUtil;
 
@@ -98,9 +97,9 @@ public class DataParserJTT808 implements IDataParser {
 
                 // 计算校验码
                 check = 0x00;
-                for (Byte b: byteList) {
+                for (Byte byteObject: byteList) {
                     // 校验码指从消息头开始，同后一字节异或，直到校验码前一个字节
-                    check ^= b.byteValue();
+                    check ^= byteObject.byteValue();
                 }
 
                 // 验证校验码
@@ -193,7 +192,8 @@ public class DataParserJTT808 implements IDataParser {
 
                 // 设置消息长度：平台通用应答回复5个字节：【应答流水号】+【应答 ID】+【结果】
                 // 双字节，最后9个bit表示消息长度，所以&0xFE00在&0x05
-                int msgProps = (((dataPackBytes[3] & 0xFF) << 8) & (dataPackBytes[4] & 0xFF) & 0xFE00) & 0x05;
+                int msgLen = 5 & 0x01FF;
+                int msgProps = (((dataPackBytes[3] & 0xFF) << 8) & (dataPackBytes[4] & 0xFF) & 0xFE00) | msgLen;
                 byteList.add((byte) ((msgProps >> 8) & 0xFF));
                 byteList.add((byte) (msgProps & 0xFF));
 
@@ -216,26 +216,51 @@ public class DataParserJTT808 implements IDataParser {
 
                 // 设置结果
                 // 结果说明：0：成功/确认；1：失败；2：消息有误；3：不支持；4：报警处理确认；
-                byte responseByte;
+                byte statusCode;
                 switch (reason) {
                     case OK:
                         // 成功接收
-                        responseByte = 0x00;
+                        statusCode = 0x00;
                         break;
                     default:
                         // 其他
-                        responseByte = 0x01;
+                        statusCode = 0x01;
                 }
-                byteList.add(responseByte);
+                byteList.add(statusCode);
 
                 // 计算并填充校验码
                 byte check = 0x00;
                 for (Byte byteObject: byteList) {
                     check ^= byteObject.byteValue();
-                    System.out.print(ByteBufUtil.hexDump(new byte[]{byteObject}).toUpperCase());
                 }
-                System.out.println();
-                System.out.println(ByteBufUtil.hexDump(new byte[]{check}));
+                byteList.add(check);
+
+                // 转义
+                List<Byte> defaultByteList = new ArrayList<>();
+                defaultByteList.add((byte) 0x7E); //标识位(0x7E)
+                for(Byte byteObject: byteList) {
+                    if(0x7D == (byteObject.byteValue() & 0xFF)) {
+                        // 0x7D->0x7D0x01
+                        defaultByteList.add((byte) 0x7D);
+                        defaultByteList.add((byte) 0x01);
+                    } else if(0x7E == (byteObject.byteValue() & 0xFF)) {
+                        // 0x7E->0x7D0x02
+                        defaultByteList.add((byte) 0x7D);
+                        defaultByteList.add((byte) 0x02);
+                    } else {
+                        defaultByteList.add(byteObject);
+                    }
+                }
+                defaultByteList.add((byte) 0x7E); //标识位(0x7E)
+
+                // add to buffer
+                byte[] responseBytes = new byte[defaultByteList.size()];
+                for (int i = 0; i < responseBytes.length; i++) {
+                    responseBytes[i] = defaultByteList.get(i);
+                }
+
+                // return
+                return Unpooled.wrappedBuffer(responseBytes);
             }
         }
         return buffer;
@@ -243,7 +268,9 @@ public class DataParserJTT808 implements IDataParser {
 
     @Override
     public void destroyResponse(ByteBuf responseBuf) {
-
+        if(null != responseBuf) {
+            ReferenceCountUtil.release(responseBuf);
+        }
     }
 
     @Override
