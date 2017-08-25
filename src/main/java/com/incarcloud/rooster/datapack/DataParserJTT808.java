@@ -471,6 +471,12 @@ public class DataParserJTT808 implements IDataParser {
                     case 0x0108:
                         /* 终端升级结果通知 */
                         System.out.println("## 0x0108 - 终端升级结果通知");
+                        // 升级类型：0：终端，12：道路运输证 IC 卡读卡器，52：北斗卫星定位模块
+                        int upgradeType = JTT808DataPackUtil.readByte(buffer);
+                        System.out.println("upgradeType: " + upgradeType);
+                        // 升级结果：0：成功，1：失败，2：取消
+                        int upgradeResult = JTT808DataPackUtil.readByte(buffer);
+                        System.out.println("upgradeResult: " + upgradeResult);
                         break;
                     case 0x0200:
                         /* 位置信息汇报 */
