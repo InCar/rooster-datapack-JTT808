@@ -489,6 +489,11 @@ public class DataParserJTT808 implements IDataParser {
                         int upgradeResult = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("upgradeResult: " + upgradeResult);
                         break;
+                    case 0x0201:
+                        /* 位置信息查询应答 */
+                        System.out.println("## 0x0201 - 位置信息查询应答");
+                        int responseMsgSeq = JTT808DataPackUtil.readWord(buffer);
+                        JTT808DataPackUtil.debug("responseMsgSeq: " + responseMsgSeq);
                     case 0x0200:
                         /* 位置信息汇报 */
                         // 1.位置基本信息
@@ -540,10 +545,6 @@ public class DataParserJTT808 implements IDataParser {
                         }
 
                         // 2.位置附加信息项列表（可没有，根据消息头中的长度字段确定）
-                        break;
-                    case 0x0201:
-                        /* 位置信息查询应答 */
-                        System.out.println("## 0x0201 - 位置信息查询应答");
                         break;
                     case 0x0301:
                         /* 事件报告 */
