@@ -1,5 +1,6 @@
 package com.incarcloud.rooster.util;
 
+import com.incarcloud.rooster.datapack.DataPackAlarm;
 import io.netty.buffer.ByteBuf;
 import io.netty.util.internal.StringUtil;
 
@@ -243,6 +244,162 @@ public class JTT808DataPackUtil extends DataPackUtil {
             return dateFormat.parse(dateString);
         }
         return null;
+    }
+
+    /**
+     * 查询long类型数据的位位索引数据
+     *
+     * @param props 标志属性数据
+     * @param index 位索引，高位在前，低位在后
+     * @return 1-true, 0-false
+     */
+    private static boolean queryLongBitContent(long props, int index) {
+        if(0x01 == ((props >> index) & 0x01)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 报警标志详情<br>
+     *     参考“表 23 位置基本信息数据格式”
+     *
+     * @param alarmProps 报警标志属性
+     * @return 报警集合
+     */
+    public static List<DataPackAlarm.Alarm> detailAlarmProps(long alarmProps) {
+        List<DataPackAlarm.Alarm> alarmList = null;
+        if(0 != alarmProps) {
+            alarmList = new ArrayList<>();
+            // 0 -> 1：紧急报警，触动报警开关后触发
+            if(queryLongBitContent(alarmProps, 0)) {
+                alarmList.add(new DataPackAlarm.Alarm("紧急报警，触动报警开关后触发", 0, "收到应答后清零"));
+            }
+            // 1 -> 1：超速报警
+            if(queryLongBitContent(alarmProps, 1)) {
+                alarmList.add(new DataPackAlarm.Alarm("超速报警", 1, "标志维持至报警条件解除"));
+            }
+            // 2 -> 1：疲劳驾驶
+            if(queryLongBitContent(alarmProps, 2)) {
+                alarmList.add(new DataPackAlarm.Alarm("疲劳驾驶", 2, "标志维持至报警条件解除"));
+            }
+            // 3 -> 1：危险预警
+            if(queryLongBitContent(alarmProps, 3)) {
+                alarmList.add(new DataPackAlarm.Alarm("危险预警", 3, "收到应答后清零"));
+            }
+            // 4 -> 1：GNSS 模块发生故障
+            if(queryLongBitContent(alarmProps, 4)) {
+                alarmList.add(new DataPackAlarm.Alarm("GNSS 模块发生故障", 4, "志维持至报警条件解除"));
+            }
+            // 5 -> 1：GNSS 天线未接或被剪断
+            if(queryLongBitContent(alarmProps, 5)) {
+                alarmList.add(new DataPackAlarm.Alarm("GNSS 天线未接或被剪断", 5, "标志维持至报警条件解除"));
+            }
+            // 6 -> 1：GNSS 天线短路
+            if(queryLongBitContent(alarmProps, 6)) {
+                alarmList.add(new DataPackAlarm.Alarm("GNSS 天线短路", 6, "标志维持至报警条件解除"));
+            }
+            // 7 -> 1：终端主电源欠压
+            if(queryLongBitContent(alarmProps, 7)) {
+                alarmList.add(new DataPackAlarm.Alarm("终端主电源欠压", 7, "标志维持至报警条件解除"));
+            }
+            // 8 -> 1：终端主电源掉电
+            if(queryLongBitContent(alarmProps, 8)) {
+                alarmList.add(new DataPackAlarm.Alarm("终端主电源掉电", 8, "标志维持至报警条件解除"));
+            }
+            // 9 -> 1：终端 LCD 或显示器故障
+            if(queryLongBitContent(alarmProps, 9)) {
+                alarmList.add(new DataPackAlarm.Alarm("终端 LCD 或显示器故障", 9, "标志维持至报警条件解除"));
+            }
+            // 10 -> 1：TTS 模块故障
+            if(queryLongBitContent(alarmProps, 10)) {
+                alarmList.add(new DataPackAlarm.Alarm("TTS 模块故障", 10, "标志维持至报警条件解除"));
+            }
+            // 11 -> 1：摄像头故障
+            if(queryLongBitContent(alarmProps, 11)) {
+                alarmList.add(new DataPackAlarm.Alarm("摄像头故障", 11, "标志维持至报警条件解除"));
+            }
+            // 12 -> 1：道路运输证 IC 卡模块故障
+            if(queryLongBitContent(alarmProps, 12)) {
+                alarmList.add(new DataPackAlarm.Alarm("道路运输证 IC 卡模块故障", 12, "标志维持至报警条件解除"));
+            }
+            // 13 -> 1：超速预警
+            if(queryLongBitContent(alarmProps, 13)) {
+                alarmList.add(new DataPackAlarm.Alarm("超速预警", 13, "标志维持至报警条件解除"));
+            }
+            // 14 -> 1：疲劳驾驶预警
+            if(queryLongBitContent(alarmProps, 14)) {
+                alarmList.add(new DataPackAlarm.Alarm("疲劳驾驶预警", 14, "标志维持至报警条件解除"));
+            }
+            // 18 -> 1：当天累计驾驶超时
+            if(queryLongBitContent(alarmProps, 18)) {
+                alarmList.add(new DataPackAlarm.Alarm("当天累计驾驶超时", 18, "标志维持至报警条件解除"));
+            }
+            // 19 -> 1：超时停车
+            if(queryLongBitContent(alarmProps, 19)) {
+                alarmList.add(new DataPackAlarm.Alarm("超时停车", 19, "标志维持至报警条件解除"));
+            }
+            // 20 -> 1：进出区域
+            if(queryLongBitContent(alarmProps, 20)) {
+                alarmList.add(new DataPackAlarm.Alarm("进出区域", 20, "收到应答后清零"));
+            }
+            // 21 -> 1：进出路线
+            if(queryLongBitContent(alarmProps, 21)) {
+                alarmList.add(new DataPackAlarm.Alarm("进出路线", 21, "收到应答后清零"));
+            }
+            // 22 -> 1：路段行驶时间不足/过长
+            if(queryLongBitContent(alarmProps, 22)) {
+                alarmList.add(new DataPackAlarm.Alarm("路段行驶时间不足/过长", 22, "收到应答后清零"));
+            }
+            // 23 -> 1：路线偏离报警
+            if(queryLongBitContent(alarmProps, 23)) {
+                alarmList.add(new DataPackAlarm.Alarm("路线偏离报警", 23, "标志维持至报警条件解除"));
+            }
+            // 24 -> 1：车辆 VSS 故障
+            if(queryLongBitContent(alarmProps, 24)) {
+                alarmList.add(new DataPackAlarm.Alarm("车辆 VSS 故障", 24, "标志维持至报警条件解除"));
+            }
+            // 25 -> 1：车辆油量异常
+            if(queryLongBitContent(alarmProps, 25)) {
+                alarmList.add(new DataPackAlarm.Alarm("车辆油量异常", 25, "标志维持至报警条件解除"));
+            }
+            // 26 -> 1：车辆被盗(通过车辆防盗器)
+            if(queryLongBitContent(alarmProps, 26)) {
+                alarmList.add(new DataPackAlarm.Alarm("车辆被盗(通过车辆防盗器)", 26, "标志维持至报警条件解除"));
+            }
+            // 27 -> 1：车辆非法点火
+            if(queryLongBitContent(alarmProps, 27)) {
+                alarmList.add(new DataPackAlarm.Alarm("车辆非法点火", 27, "收到应答后清零"));
+            }
+            // 28 -> 1：车辆非法位移
+            if(queryLongBitContent(alarmProps, 28)) {
+                alarmList.add(new DataPackAlarm.Alarm("车辆非法位移", 28, "收到应答后清零"));
+            }
+            // 29 -> 1：碰撞预警
+            if(queryLongBitContent(alarmProps, 29)) {
+                alarmList.add(new DataPackAlarm.Alarm("碰撞预警", 29, "标志维持至报警条件解除"));
+            }
+            // 30 -> 1：侧翻预警
+            if(queryLongBitContent(alarmProps, 30)) {
+                alarmList.add(new DataPackAlarm.Alarm("侧翻预警", 30, "标志维持至报警条件解除"));
+            }
+            // 31 -> 1：非法开门报警（终端未设置区域时，不判断非法开门）
+            if(queryLongBitContent(alarmProps, 31)) {
+                alarmList.add(new DataPackAlarm.Alarm("非法开门报警（终端未设置区域时，不判断非法开门）", 31, "收到应答后清零"));
+            }
+        }
+        return alarmList;
+    }
+
+    /**
+     * 打印调试信息，调试完成后设置false
+     *
+     * @param string 字符串
+     */
+    public static void debug(String string) {
+        if(true) {
+            System.out.println(string);
+        }
     }
 
     protected JTT808DataPackUtil() {
