@@ -178,7 +178,6 @@ public class DataParserJTT808 implements IDataParser {
     public ByteBuf createResponse(DataPack requestPack, ERespReason reason) {
         // 发送消息时：消息封装——>计算并填充校验码——>转义
         // 0x7e-0x7d02, 0x7d-0x7d01
-        ByteBuf buffer = null;
         if(null != requestPack && null != reason) {
             // 原始数据
             byte[] dataPackBytes = validate(Base64.getDecoder().decode(requestPack.getDataB64()));
@@ -186,16 +185,13 @@ public class DataParserJTT808 implements IDataParser {
                 // 初始化List容器，装载【消息头+消息体】
                 List<Byte> byteList = new ArrayList<>();
 
-                // 设置回复命令字
-                byteList.add((byte) 0x80);
-                byteList.add((byte) 0x01);
+                // 预留回复命令字位置
+                byteList.add((byte) 0xFF);
+                byteList.add((byte) 0xFF);
 
-                // 设置消息长度：平台通用应答回复5个字节：【应答流水号】+【应答 ID】+【结果】
-                // 双字节，最后9个bit表示消息长度，所以&0xFE00在&0x05
-                int msgLen = 5 & 0x01FF;
-                int msgProps = (((dataPackBytes[3] & 0xFF) << 8) & (dataPackBytes[4] & 0xFF) & 0xFE00) | msgLen;
-                byteList.add((byte) ((msgProps >> 8) & 0xFF));
-                byteList.add((byte) (msgProps & 0xFF));
+                // 预留消息长度位置
+                byteList.add((byte) 0xFF);
+                byteList.add((byte) 0xFF);
 
                 // 设置终端手机号(6个字节BCD码)，5~10
                 for (int i = 5; i <= 10; i++) {
@@ -205,28 +201,86 @@ public class DataParserJTT808 implements IDataParser {
                 // 设置消息流水号，同终端消息的流水号
                 byteList.add(dataPackBytes[11]);
                 byteList.add(dataPackBytes[12]);
-
-                // 设置对应的终端消息的流水号
-                byteList.add(dataPackBytes[11]);
-                byteList.add(dataPackBytes[12]);
-
-                // 设置对应的终端消息的ID
-                byteList.add(dataPackBytes[1]);
-                byteList.add(dataPackBytes[2]);
-
-                // 设置结果
-                // 结果说明：0：成功/确认；1：失败；2：消息有误；3：不支持；4：报警处理确认；
+                /*====================begin-判断msgId回复消息-begin====================*/
+                // 消息ID
+                int msgId = ((dataPackBytes[1] & 0xFF) << 8) | (dataPackBytes[2] & 0xFF);
+                int msgLen;
                 byte statusCode;
-                switch (reason) {
-                    case OK:
-                        // 成功接收
-                        statusCode = 0x00;
+
+                // 根据msgId回复信息，否则使用通用应答
+                switch (msgId) {
+                    case 0x0100:
+                        // 0x0100 - 终端注册
+                        // 0x8100 - 终端注册应答
+                        byteList.set(0, (byte) 0x81);
+                        byteList.set(0, (byte) 0x00);
+
+                        // 设置对应的终端消息的流水号
+                        byteList.add(dataPackBytes[11]);
+                        byteList.add(dataPackBytes[12]);
+
+                        // 设置结果
+                        // 结果说明：0：成功；1：车辆已被注册；2：数据库中无该车辆；3：终端已被注册；4：数据库中无该终端
+                        switch (reason) {
+                            case OK:
+                                // 成功接收
+                                statusCode = 0x00;
+                                //--add
+                                byteList.add(statusCode);
+                                // 鉴权码：使用UUID策略
+                                byte[] authCodeBytes = UUID.randomUUID().toString().getBytes();
+                                for (int i = 0; i < authCodeBytes.length; i++) {
+                                    byteList.add(authCodeBytes[i]);
+                                }
+                                // 消息长度
+                                msgLen = 3 + authCodeBytes.length & 0x01FF;
+                                break;
+                            default:
+                                // 其他
+                                statusCode = 0x01;
+                                // 消息长度：3个字节
+                                msgLen = 3 & 0x01FF;
+                                //--add
+                                byteList.add(statusCode);
+                        }
+
                         break;
                     default:
-                        // 其他
-                        statusCode = 0x01;
+                        // 0x8001 - 平台通用应答
+                        byteList.set(0, (byte) 0x80);
+                        byteList.set(1, (byte) 0x01);
+
+                        // 设置对应的终端消息的流水号
+                        byteList.add(dataPackBytes[11]);
+                        byteList.add(dataPackBytes[12]);
+
+                        // 设置对应的终端消息的ID
+                        byteList.add(dataPackBytes[1]);
+                        byteList.add(dataPackBytes[2]);
+
+                        // 设置结果
+                        // 结果说明：0：成功/确认；1：失败；2：消息有误；3：不支持；4：报警处理确认；
+                        switch (reason) {
+                            case OK:
+                                // 成功接收
+                                statusCode = 0x00;
+                                break;
+                            default:
+                                // 其他
+                                statusCode = 0x01;
+                        }
+                        byteList.add(statusCode);
+
+                        // 消息长度：平台通用应答回复5个字节：【应答流水号】+【应答 ID】+【结果】
+                        msgLen = 5 & 0x01FF;
                 }
-                byteList.add(statusCode);
+
+                // 设置消息体属性
+                // 双字节，最后9个bit表示消息长度，所以&0xFE00在&0x05
+                int msgProps = (((dataPackBytes[3] & 0xFF) << 8) & (dataPackBytes[4] & 0xFF) & 0xFE00) | msgLen;
+                byteList.set(2, (byte) ((msgProps >> 8) & 0xFF));
+                byteList.set(3, (byte) (msgProps & 0xFF));
+                /*====================end---判断msgId回复消息---end====================*/
 
                 // 计算并填充校验码
                 byte check = 0x00;
@@ -263,7 +317,7 @@ public class DataParserJTT808 implements IDataParser {
                 return Unpooled.wrappedBuffer(responseBytes);
             }
         }
-        return buffer;
+        return null;
     }
 
     @Override
@@ -337,18 +391,10 @@ public class DataParserJTT808 implements IDataParser {
                         /* 终端通用应答 */
                         System.out.println("## 0x001 - 终端通用应答");
                         break;
-                    case 0x8001:
-                        /* 平台通用应答 */
-                        System.out.println("## 0x8001 - 平台通用应答");
-                        break;
                     case 0x0002:
                         /* 终端心跳 */
                         System.out.println("## 0x0002 - 终端心跳");
                         // 已解析，只有消息头
-                        break;
-                    case 0x8003:
-                        /* 补传分包请求 */
-                        System.out.println("## 0x8003 - 补传分包请求");
                         break;
                     case 0x0100:
                         /* 终端注册 */
@@ -382,10 +428,6 @@ public class DataParserJTT808 implements IDataParser {
                             System.out.println("License: " + vin);
                         }
                         break;
-                    case 0x8100:
-                        /* 终端注册应答 */
-                        System.out.println("## 0x8100 - 终端注册应答");
-                        break;
                     case 0x0003:
                         /* 终端注销 */
                         System.out.println("## 0x0003 - 终端注销");
@@ -394,37 +436,13 @@ public class DataParserJTT808 implements IDataParser {
                         /* 终端鉴权 */
                         System.out.println("## 0x0102 - 终端鉴权");
                         break;
-                    case 0x8103:
-                        /* 设置终端参数 */
-                        System.out.println("## 0x8103 - 设置终端参数");
-                        break;
-                    case 0x8104:
-                        /* 查询终端参数 */
-                        System.out.println("## 0x8104 - 查询终端参数");
-                        break;
                     case 0x0104:
                         /* 查询终端参数应答 */
                         System.out.println("## 0x0104 - 查询终端参数应答");
                         break;
-                    case 0x8105:
-                        /* 终端控制 */
-                        System.out.println("## 0x8105 - 终端控制");
-                        break;
-                    case 0x8106:
-                        /* 查询指定终端参数 */
-                        System.out.println("## 0x8106 - 查询指定终端参数");
-                        break;
-                    case 0x8107:
-                        /* 查询终端属性 */
-                        System.out.println("## 0x8107 - 查询终端属性");
-                        break;
                     case 0x0107:
                         /* 查询终端属性应答 */
                         System.out.println("## 0x0107 - 查询终端属性应答");
-                        break;
-                    case 0x8108:
-                        /* 下发终端升级包 */
-                        System.out.println("## 0x8108 - 下发终端升级包");
                         break;
                     case 0x0108:
                         /* 终端升级结果通知 */
@@ -452,113 +470,29 @@ public class DataParserJTT808 implements IDataParser {
                         System.out.println("positionTime: " + positionTime);
                         // 2.位置附加信息项列表（可没有，根据消息头中的长度字段确定）
                         break;
-                    case 0x8201:
-                        /* 位置信息查询 */
-                        System.out.println("## 0x8201 - 位置信息查询");
-                        break;
                     case 0x0201:
                         /* 位置信息查询应答 */
                         System.out.println("## 0x0201 - 位置信息查询应答");
-                        break;
-                    case 0x8202:
-                        /* 临时位置跟踪控制 */
-                        System.out.println("## 0x8202 - 临时位置跟踪控制");
-                        break;
-                    case 0x8203:
-                        /* 人工确认报警消息 */
-                        System.out.println("## 0x8203 - 人工确认报警消息");
-                        break;
-                    case 0x8300:
-                        /* 文本信息下发 */
-                        System.out.println("## 0x8300 - 文本信息下发");
-                        break;
-                    case 0x8301:
-                        /* 事件设置 */
-                        System.out.println("## 0x8301 - 事件设置");
                         break;
                     case 0x0301:
                         /* 事件报告 */
                         System.out.println("## 0x0301 - 事件报告");
                         break;
-                    case 0x8302:
-                        /* 提问下发 */
-                        System.out.println("## 0x8302 - 提问下发");
-                        break;
                     case 0x0302:
                         /* 提问应答 */
                         System.out.println("## 0x0302 - 提问应答");
-                        break;
-                    case 0x8303:
-                        /* 信息点播菜单设置 */
-                        System.out.println("## 0x8303 - 信息点播菜单设置");
                         break;
                     case 0x0303:
                         /* 信息点播/取消 */
                         System.out.println("## 0x0303 - 信息点播/取消");
                         break;
-                    case 0x8304:
-                        /* 信息服务 */
-                        System.out.println("## 0x8304 - 信息服务");
-                        break;
-                    case 0x8400:
-                        /* 电话回拨 */
-                        System.out.println("## 0x8400 - 电话回拨");
-                        break;
-                    case 0x8401:
-                        /* 设置电话本 */
-                        System.out.println("## 0x8401 - 设置电话本");
-                        break;
-                    case 0x8500:
-                        /* 车辆控制 */
-                        System.out.println("## 0x8500 - 车辆控制");
-                        break;
                     case 0x0500:
                         /* 车辆控制应答 */
                         System.out.println("## 0x0500 - 车辆控制应答");
                         break;
-                    case 0x8600:
-                        /* 设置圆形区域 */
-                        System.out.println("## 0x8600 - 设置圆形区域");
-                        break;
-                    case 0x8601:
-                        /* 删除圆形区域 */
-                        System.out.println("## 0x8601 - 删除圆形区域");
-                        break;
-                    case 0x8602:
-                        /* 设置矩形区域 */
-                        System.out.println("## 0x8602 - 设置矩形区域");
-                        break;
-                    case 0x8603:
-                        /* 删除矩形区域 */
-                        System.out.println("## 0x8603 - 删除矩形区域");
-                        break;
-                    case 0x8604:
-                        /* 设置多边形区域 */
-                        System.out.println("## 0x8604 - 设置多边形区域");
-                        break;
-                    case 0x8605:
-                        /* 删除多边形区域 */
-                        System.out.println("## 0x8605 - 删除多边形区域");
-                        break;
-                    case 0x8606:
-                        /* 设置路线 */
-                        System.out.println("## 0x8606 - 设置路线");
-                        break;
-                    case 0x8607:
-                        /* 删除路线 */
-                        System.out.println("## 0x8607 - 删除路线");
-                        break;
-                    case 0x8700:
-                        /* 行驶记录仪数据采集命令 */
-                        System.out.println("## 0x8700 - 行驶记录仪数据采集命令");
-                        break;
                     case 0x0700:
                         /* 行驶记录仪数据上传 */
                         System.out.println("## 0x0700 - 行驶记录仪数据上传");
-                        break;
-                    case 0x8701:
-                        /* 行驶记录仪参数下传命令 */
-                        System.out.println("## 0x8701 - 行驶记录仪参数下传命令");
                         break;
                     case 0x0701:
                         /* 电子运单上报 */
@@ -567,10 +501,6 @@ public class DataParserJTT808 implements IDataParser {
                     case 0x0702:
                         /* 驾驶员身份信息采集上报 */
                         System.out.println("## 0x0702 - 驾驶员身份信息采集上报");
-                        break;
-                    case 0x8702:
-                        /* 上报驾驶员身份信息请求 */
-                        System.out.println("## 0x8702 - 上报驾驶员身份信息请求");
                         break;
                     case 0x0704:
                         /* 定位数据批量上传 */
@@ -588,41 +518,13 @@ public class DataParserJTT808 implements IDataParser {
                         /* 多媒体数据上传 */
                         System.out.println("## 0x0801 - 多媒体数据上传");
                         break;
-                    case 0x8800:
-                        /* 多媒体数据上传应答 */
-                        System.out.println("## 0x8800 - 多媒体数据上传应答");
-                        break;
-                    case 0x8801:
-                        /* 摄像头立即拍摄命令 */
-                        System.out.println("## 0x8801 - 摄像头立即拍摄命令");
-                        break;
                     case 0x0805:
                         /* 摄像头立即拍摄命令应答 */
                         System.out.println("## 0x0805 - 摄像头立即拍摄命令应答");
                         break;
-                    case 0x8802:
-                        /* 存储多媒体数据检索 */
-                        System.out.println("## 0x0802 - 存储多媒体数据检索");
-                        break;
                     case 0x0802:
                         /* 存储多媒体数据检索应答 */
                         System.out.println("## 0x0802 - 存储多媒体数据检索应答");
-                        break;
-                    case 0x8803:
-                        /* 存储多媒体数据上传 */
-                        System.out.println("## 0x8803 - 存储多媒体数据上传");
-                        break;
-                    case 0x8804:
-                        /* 录音开始命令 */
-                        System.out.println("## 0x8804 - 录音开始命令");
-                        break;
-                    case 0x8805:
-                        /* 单条存储多媒体数据检索上传命令 */
-                        System.out.println("## 0x8805 - 单条存储多媒体数据检索上传命令");
-                        break;
-                    case 0x8900:
-                        /* 数据下行透传 */
-                        System.out.println("## 0x8900 - 数据下行透传");
                         break;
                     case 0x0900:
                         /* 数据上行透传 */
@@ -631,10 +533,6 @@ public class DataParserJTT808 implements IDataParser {
                     case 0x0901:
                         /* 数据压缩上报 */
                         System.out.println("## 0x0901 - 数据压缩上报");
-                        break;
-                    case 0x8A00:
-                        /* 平台 RSA 公钥 */
-                        System.out.println("## 0x8A00 - 平台 RSA 公钥");
                         break;
                     case 0x0A00:
                         /* 终端 RSA 公钥 */

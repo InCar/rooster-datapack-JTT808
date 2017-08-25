@@ -56,6 +56,7 @@ public class DataParserJTT808Test {
     @Test
     public void testCreateResponse() {
         List<DataPack> dataPackList = parser.extract(buffer);
+        //System.out.println(ByteBufUtil.hexDump(parser.createResponse(dataPackList.get(1), ERespReason.OK)).toUpperCase());
         Assert.assertEquals("7E800100050133003127071BFF1BFF000200A57E", ByteBufUtil.hexDump(parser.createResponse(dataPackList.get(0), ERespReason.OK)).toUpperCase());
     }
 
