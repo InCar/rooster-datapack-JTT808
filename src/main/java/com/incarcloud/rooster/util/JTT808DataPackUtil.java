@@ -129,7 +129,19 @@ public class JTT808DataPackUtil extends DataPackUtil {
      * @throws UnsupportedEncodingException
      */
     public static String readString(ByteBuf buffer) throws UnsupportedEncodingException {
-        byte[] stringBytes = new byte[buffer.readableBytes() - 2];
+        return readString(buffer, buffer.readableBytes() - 2);
+    }
+
+    /**
+     * 读取指定长度的字节数组转换为字符串(GBK)
+     *
+     * @param buffer ByteBuf
+     * @param length 长度
+     * @return gbk string
+     * @throws UnsupportedEncodingException
+     */
+    public static String readString(ByteBuf buffer, int length) throws UnsupportedEncodingException {
+        byte[] stringBytes = new byte[length];
         buffer.readBytes(stringBytes);
         return new String(stringBytes, "GBK");
     }

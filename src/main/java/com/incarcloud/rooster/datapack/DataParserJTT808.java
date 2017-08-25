@@ -403,12 +403,12 @@ public class DataParserJTT808 implements IDataParser {
                         System.out.println("provinceId: " + provinceId);
                         int cityId = JTT808DataPackUtil.readWord(buffer);
                         System.out.println("cityId: " + cityId);
-                        String manufacturerId = JTT808DataPackUtil.readByteArray(buffer, 5);
-                        System.out.println("manufacturerId: " + manufacturerId);
-                        String terminalModel = JTT808DataPackUtil.readByteArray(buffer, 20);
-                        System.out.println("terminalModel: " + terminalModel);
-                        String terminalId = JTT808DataPackUtil.readByteArray(buffer, 7);
-                        System.out.println("terminalId: " + terminalId);
+                        String deviceManufacturerId = JTT808DataPackUtil.readByteArray(buffer, 5);
+                        System.out.println("deviceManufacturerId: " + deviceManufacturerId);
+                        String deviceModel = JTT808DataPackUtil.readByteArray(buffer, 20);
+                        System.out.println("deviceModel: " + deviceModel);
+                        String deviceSID = JTT808DataPackUtil.readByteArray(buffer, 7);
+                        System.out.println("deviceSID: " + deviceSID);
                         int colorId = JTT808DataPackUtil.readByte(buffer);
                         System.out.println("colorId: " + colorId);
                         switch (colorId) {
@@ -442,10 +442,31 @@ public class DataParserJTT808 implements IDataParser {
                     case 0x0104:
                         /* 查询终端参数应答 */
                         System.out.println("## 0x0104 - 查询终端参数应答");
+                        // TODO 参数项格式和定义见表 10
                         break;
                     case 0x0107:
                         /* 查询终端属性应答 */
                         System.out.println("## 0x0107 - 查询终端属性应答");
+                        int deviceType = JTT808DataPackUtil.readWord(buffer);
+                        System.out.println("deviceType: " + deviceType);
+                        deviceManufacturerId = JTT808DataPackUtil.readByteArray(buffer, 5);
+                        System.out.println("deviceManufacturerId: " + deviceManufacturerId);
+                        deviceModel = JTT808DataPackUtil.readByteArray(buffer, 20);
+                        System.out.println("deviceModel: " + deviceModel);
+                        deviceSID = JTT808DataPackUtil.readByteArray(buffer, 7);
+                        System.out.println("deviceSID: " + deviceSID);
+                        String deviceSIMICCID = JTT808DataPackUtil.readBCD(buffer, 10);
+                        System.out.println("deviceSIMICCID: " + deviceSIMICCID);
+                        String hardwareVersion = JTT808DataPackUtil.readString(buffer, JTT808DataPackUtil.readByte(buffer));
+                        System.out.println("hardwareVersion: " + hardwareVersion);
+                        String firmwareVersion = JTT808DataPackUtil.readString(buffer, JTT808DataPackUtil.readByte(buffer));
+                        System.out.println("firmwareVersion: " + firmwareVersion);
+                        int gnssProps = JTT808DataPackUtil.readByte(buffer);
+                        System.out.println("gnssProps: " + gnssProps);
+                        // TODO gnssProps详情待解析
+                        int communicationProps = JTT808DataPackUtil.readByte(buffer);
+                        System.out.println("communicationProps: " + communicationProps);
+                        // TODO communicationProps详情待解析
                         break;
                     case 0x0108:
                         /* 终端升级结果通知 */
