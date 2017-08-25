@@ -431,10 +431,13 @@ public class DataParserJTT808 implements IDataParser {
                     case 0x0003:
                         /* 终端注销 */
                         System.out.println("## 0x0003 - 终端注销");
+                        // 终端注销消息体为空
                         break;
                     case 0x0102:
                         /* 终端鉴权 */
                         System.out.println("## 0x0102 - 终端鉴权");
+                        String authCodeString = JTT808DataPackUtil.readString(buffer);
+                        System.out.println("authCodeString: " + authCodeString);
                         break;
                     case 0x0104:
                         /* 查询终端参数应答 */
