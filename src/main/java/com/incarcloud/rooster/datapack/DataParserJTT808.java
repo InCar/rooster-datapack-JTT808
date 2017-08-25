@@ -549,14 +549,24 @@ public class DataParserJTT808 implements IDataParser {
                     case 0x0301:
                         /* 事件报告 */
                         System.out.println("## 0x0301 - 事件报告");
+                        int eventId = JTT808DataPackUtil.readByte(buffer);
+                        JTT808DataPackUtil.debug("eventId: " + eventId);
                         break;
                     case 0x0302:
                         /* 提问应答 */
                         System.out.println("## 0x0302 - 提问应答");
+                        responseMsgSeq = JTT808DataPackUtil.readWord(buffer);
+                        JTT808DataPackUtil.debug("responseMsgSeq: " + responseMsgSeq);
+                        int answerId = JTT808DataPackUtil.readByte(buffer);
+                        JTT808DataPackUtil.debug("answerId: " + answerId);
                         break;
                     case 0x0303:
                         /* 信息点播/取消 */
                         System.out.println("## 0x0303 - 信息点播/取消");
+                        int messageType = JTT808DataPackUtil.readByte(buffer);
+                        JTT808DataPackUtil.debug("messageType: " + messageType);
+                        int messageResult = JTT808DataPackUtil.readByte(buffer);
+                        JTT808DataPackUtil.debug("messageResult: " + messageResult);
                         break;
                     case 0x0500:
                         /* 车辆控制应答 */
