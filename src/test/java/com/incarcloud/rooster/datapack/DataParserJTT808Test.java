@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * DataParserJTT808Test
@@ -70,6 +71,10 @@ public class DataParserJTT808Test {
 
     @Test
     public void testGetMetaData() {
-
+        ByteBuf buffer = Unpooled.wrappedBuffer(new byte[]{0x7E, 0x00, 0x02, 0x00, 0x00, 0x01, 0x33, 0x00, 0x31, 0x27, 0x07, 0x1B, (byte) 0xFF, (byte) 0xC5, 0x7E});
+        Map<String, Object> metaMap = parser.getMetaData(buffer);
+        Assert.assertEquals("china-jtt808-2013.1", metaMap.get("protocol"));
+        Assert.assertEquals("013300312707", metaMap.get("deviceId"));
+        ReferenceCountUtil.release(buffer);
     }
 }

@@ -1088,6 +1088,26 @@ public class DataParserJTT808 implements IDataParser {
 
     @Override
     public Map<String, Object> getMetaData(ByteBuf buffer) {
+        byte[] dataPackBytes = validate(JTT808DataPackUtil.readBytes(buffer, buffer.readableBytes()));
+        if(null != dataPackBytes) {
+            Map<String, Object> metaDataMap = new HashMap<>();
+            // 协议版本
+            metaDataMap.put("protocol", PROTOCOL_PREFIX + PROTOCOL_VERSION);
+
+            // 设备ID
+            int number;
+            StringBuffer stringBuffer = new StringBuffer();
+            for (int i = 5; i < 11; i++) {
+                number = dataPackBytes[i];
+                stringBuffer.append(number >> 4 & 0x0F);
+                stringBuffer.append(number & 0x0F);
+            }
+            metaDataMap.put("deviceId", stringBuffer.toString());
+
+            // VIN
+            // 无法给出
+            return metaDataMap;
+        }
         return null;
     }
 }
