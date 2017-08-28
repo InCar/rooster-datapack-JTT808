@@ -1,8 +1,6 @@
 package com.incarcloud.rooster.util;
 
-import com.incarcloud.rooster.datapack.DataPackAlarm;
-import com.incarcloud.rooster.datapack.DataPackObject;
-import com.incarcloud.rooster.datapack.DataPackPosition;
+import com.incarcloud.rooster.datapack.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.util.internal.StringUtil;
 
@@ -326,6 +324,138 @@ public class JTT808DataPackUtil extends DataPackUtil {
         dataPackPosition.setPositionTime(positionTime);
         JTT808DataPackUtil.debug("positionTime: " + positionTime);
         return dataPackPosition;
+    }
+
+    /**
+     * 读取位置数据附加信息，并封装返回DataPackTarget集合<br>
+     *     考虑到数据包里面包含报警数据和极值数据，所以返回DataPackTarget集合
+     *
+     * @param buffer
+     * @param dataPackPosition
+     * @return
+     */
+    public static List<DataPackTarget> readPositionExtra(ByteBuf buffer, DataPackPosition dataPackPosition) {
+        // 声明变量
+        int extraMsgId;
+        int extraMsgLength;
+        String extraMsgContent;
+        List<DataPackTarget> dataPackTargetList = new ArrayList<>();
+        DataPackPeak.Peak peak;
+        List<DataPackPeak.Peak> peakList = new ArrayList<>();
+        DataPackPeak dataPackPeak;
+        DataPackAlarm.Alarm alarm;
+        List<DataPackAlarm.Alarm> alarmList = new ArrayList<>();
+        DataPackAlarm dataPackAlarm;
+
+        // 读取数据
+        while(2 < buffer.readableBytes()) {
+            // 1.附加信息 ID
+            extraMsgId = JTT808DataPackUtil.readByte(buffer);
+            JTT808DataPackUtil.debug("extraMsgId: " + extraMsgId);
+            // 2.附加信息长度
+            extraMsgLength = JTT808DataPackUtil.readByte(buffer);
+            JTT808DataPackUtil.debug("extraMsgLength: " + extraMsgLength);
+            // 3.附加信息
+            // 3.1 判断
+            // 0x05-0x10 - 保留
+            // 0xE1-0xFF - 自定义区域
+            // 0x01 - 4 - 里程，DWORD，1/10km，对应车上里程表读数
+            if(0x01 == extraMsgId && 4 == extraMsgLength) {
+                // 单位km
+                extraMsgContent = String.valueOf(JTT808DataPackUtil.readDWord(buffer)/10);
+                peak = new DataPackPeak.Peak(extraMsgId, extraMsgContent);
+                peak.setPeakUnit("km");
+                peak.setPeakDesc("里程，对应车上里程表读数");
+                //--add
+                peakList.add(peak);
+                break;
+            }
+            // 0x02 - 2 - 油量，WORD，1/10L，对应车上油量表读数
+            if(0x02 == extraMsgId && 2 == extraMsgLength) {
+                // 单位L
+                extraMsgContent = String.valueOf(JTT808DataPackUtil.readWord(buffer)/10);
+                peak = new DataPackPeak.Peak(extraMsgId, extraMsgContent);
+                peak.setPeakUnit("L");
+                peak.setPeakDesc("油量，对应车上油量表读数");
+                //--add
+                peakList.add(peak);
+                break;
+            }
+            // 0x03 - 2 - 行驶记录功能获取的速度，WORD，1/10km/h
+            if(0x03 == extraMsgId && 2 == extraMsgLength) {
+                // 单位km/h
+                extraMsgContent = String.valueOf(JTT808DataPackUtil.readWord(buffer)/10);
+                peak = new DataPackPeak.Peak(extraMsgId, extraMsgContent);
+                peak.setPeakUnit("km/h");
+                peak.setPeakDesc("行驶记录功能获取的速度");
+                //--add
+                peakList.add(peak);
+                break;
+            }
+            // 0x04 - 2 - 需要人工确认报警事件的 ID，WORD，从 1 开始计数
+            if(0x04 == extraMsgId && 2 == extraMsgLength) {
+                alarm = new DataPackAlarm.Alarm("需要人工确认报警事件的 ID");
+                alarm.setAlarmCode(String.valueOf(extraMsgId));
+                alarm.setAlarmValue(String.valueOf(JTT808DataPackUtil.readWord(buffer)));
+                //--add
+                alarmList.add(alarm);
+                break;
+            }
+            // 0x11 - 1 或 5 - 超速报警附加信息见 表 28
+            if(0x11 == extraMsgId && (1 == extraMsgLength || 5 == extraMsgLength)) {
+                alarm = new DataPackAlarm.Alarm("超速报警");
+                alarm.setAlarmCode(String.valueOf(extraMsgId));
+                switch (extraMsgLength) {
+                    case 1:
+                        // 0：无特定位置
+                        alarm.setAlarmValue(String.valueOf(JTT808DataPackUtil.readByte(buffer)));
+                        break;
+                    case 2:
+                        // 1：圆形区域；2：矩形区域；3：多边形区域；4：路段
+                        StringBuffer stringBuffer = new StringBuffer();
+                        stringBuffer.append(JTT808DataPackUtil.readByte(buffer));
+                        stringBuffer.append("-");
+                        stringBuffer.append(JTT808DataPackUtil.readDWord(buffer));
+                        break;
+                }
+                alarm.setAlarmDesc("【位置类型：0：无特定位置；1：圆形区域；2：矩形区域；3：多边形区域；4：路段】－【区域或路段 ID】");
+                //--add
+                alarmList.add(alarm);
+                break;
+            }
+            // 0x12 - 6 - 进出区域/路线报警附加信息见 表 29
+            if(0x12 == extraMsgId) {
+
+            }
+            // 0x13 - 7 - 路段行驶时间不足/过长报警附加信息见 表 30
+            if(0x13 == extraMsgId) {
+
+            }
+            // 0x25 - 4 - 扩展车辆信号状态位，定义见 表 31
+            if(0x25 == extraMsgId) {
+
+            }
+            // 0x2A - 2 - IO状态位，定义见 表 32
+            if(0x2A == extraMsgId) {
+
+            }
+            // 0x2B - 4 - 模拟量，bit0-15，AD0；bit16-31，AD1。
+            if(0x2B == extraMsgId) {
+
+            }
+            // 0x30 - 1 - BYTE，无线通信网络信号强度
+            if(0x30 == extraMsgId) {
+
+            }
+            // 0x31 - 1 - BYTE，GNSS 定位卫星数
+            if(0x31 == extraMsgId) {
+
+            }
+
+            // 无匹配则释放
+            JTT808DataPackUtil.readBytes(buffer, extraMsgLength);
+        }
+        return dataPackTargetList;
     }
 
     /**

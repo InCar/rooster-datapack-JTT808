@@ -597,18 +597,8 @@ public class DataParserJTT808 implements IDataParser {
 
                         // 4.位置附加数据
                         if(28 < msgLength) {
-                            while(2 < buffer.readableBytes()) {
-                                // 4.1 附加信息 ID
-                                int extraMsgId = JTT808DataPackUtil.readByte(buffer);
-                                JTT808DataPackUtil.debug("extraMsgId: " + extraMsgId);
-                                // 4.2 附加信息长度
-                                int extraMsgLength = JTT808DataPackUtil.readByte(buffer);
-                                JTT808DataPackUtil.debug("extraMsgLength: " + extraMsgLength);
-                                // 4.3 附加信息
-                                byte[] extraMsgContent = JTT808DataPackUtil.readBytes(buffer, extraMsgLength);
-                                JTT808DataPackUtil.debug("extraMsgContent: " + DatatypeConverter.printHexBinary(extraMsgContent));
-                                System.out.println(buffer.readableBytes());
-                            }
+                            //--add
+                            dataPackTargetList.addAll(JTT808DataPackUtil.readPositionExtra(buffer, dataPackPosition));
                         }
                         break;
                     case 0x0301:
