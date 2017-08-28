@@ -571,18 +571,81 @@ public class DataParserJTT808 implements IDataParser {
                     case 0x0500:
                         /* 车辆控制应答 */
                         System.out.println("## 0x0500 - 车辆控制应答");
+                        responseMsgSeq = JTT808DataPackUtil.readWord(buffer);
+                        JTT808DataPackUtil.debug("responseMsgSeq: " + responseMsgSeq);
+                        // TODO 位置信息汇报消息体
                         break;
                     case 0x0700:
                         /* 行驶记录仪数据上传 */
                         System.out.println("## 0x0700 - 行驶记录仪数据上传");
+                        // TODO GB/T 19056
                         break;
                     case 0x0701:
                         /* 电子运单上报 */
                         System.out.println("## 0x0701 - 电子运单上报");
+                        // 1.电子运单长度
+                        Long waybillLength = JTT808DataPackUtil.readDWord(buffer);
+                        JTT808DataPackUtil.debug("waybillLength: " + waybillLength);
+                        // TODO 电子运单内容
                         break;
                     case 0x0702:
                         /* 驾驶员身份信息采集上报 */
                         System.out.println("## 0x0702 - 驾驶员身份信息采集上报");
+                        // 1.状态
+                        int driverICStatus = JTT808DataPackUtil.readByte(buffer);
+                        switch (driverICStatus) {
+                            case 0x01:
+                                // 0x01：从业资格证 IC 卡插入（驾驶员上班）
+                                JTT808DataPackUtil.debug("--从业资格证 IC 卡插入（驾驶员上班）");
+                                break;
+                            case 0x02:
+                                // 0x02：从业资格证 IC 卡拔出（驾驶员下班）
+                                JTT808DataPackUtil.debug("--从业资格证 IC 卡拔出（驾驶员下班）");
+                                break;
+                        }
+                        // 2.时间
+                        Date driverICTime = JTT808DataPackUtil.readDate(buffer);
+                        JTT808DataPackUtil.debug("driverICTime: " + driverICTime);
+                        // 3.IC 卡读取结果
+                        int driverICResult = JTT808DataPackUtil.readByte(buffer);
+                        switch (driverICResult) {
+                            case 0x00:
+                                // 0x00：IC 卡读卡成功
+                                JTT808DataPackUtil.debug("--IC 卡读卡成功");
+                                break;
+                            case 0x01:
+                                // 0x01：读卡失败，原因为卡片密钥认证未通过
+                                JTT808DataPackUtil.debug("--读卡失败，原因为卡片密钥认证未通过");
+                                break;
+                            case 0x02:
+                                // 0x02：读卡失败，原因为卡片已被锁定
+                                JTT808DataPackUtil.debug("--读卡失败，原因为卡片已被锁定");
+                                break;
+                            case 0x03:
+                                // 0x03：读卡失败，原因为卡片被拔出
+                                JTT808DataPackUtil.debug("--读卡失败，原因为卡片被拔出");
+                                break;
+                            case 0x04:
+                                // 0x04：读卡失败，原因为数据校验错误
+                                JTT808DataPackUtil.debug("--读卡失败，原因为数据校验错误");
+                                break;
+                        }
+                        // 4.驾驶员姓名
+                        int driverNameLength = JTT808DataPackUtil.readByte(buffer);
+                        JTT808DataPackUtil.debug("driverNameLength: " + driverNameLength);
+                        String driverName = JTT808DataPackUtil.readString(buffer, driverNameLength);
+                        JTT808DataPackUtil.debug("driverName: " + driverName);
+                        // 5.从业资格证编码
+                        String driverCertCode = JTT808DataPackUtil.readString(buffer, 20);
+                        JTT808DataPackUtil.debug("driverCertCode: " + driverCertCode);
+                        // 6.发证机构名称
+                        int driverCertOrganizationLength = JTT808DataPackUtil.readByte(buffer);
+                        JTT808DataPackUtil.debug("driverCertOrganizationLength: " + driverCertOrganizationLength);
+                        String driverCertOrganizationName = JTT808DataPackUtil.readString(buffer, driverCertOrganizationLength);
+                        JTT808DataPackUtil.debug("driverCertOrganizationName: " + driverCertOrganizationName);
+                        // 7.证件有效期
+                        Date driverCertExpireDate = JTT808DataPackUtil.readDateOnly(buffer);
+                        JTT808DataPackUtil.debug("driverCertExpireDate: " + driverCertExpireDate);
                         break;
                     case 0x0704:
                         /* 定位数据批量上传 */

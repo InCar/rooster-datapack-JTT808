@@ -247,6 +247,21 @@ public class JTT808DataPackUtil extends DataPackUtil {
     }
 
     /**
+     * 读取BCD[4]日期数据
+     *
+     * @param buffer ByteBuf
+     * @return
+     */
+    public static Date readDateOnly(ByteBuf buffer) throws ParseException {
+        String dateString = readBCD(buffer, 4);
+        if(!StringUtil.isNullOrEmpty(dateString)) {
+            DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd", Locale.CHINA);
+            return dateFormat.parse(dateString);
+        }
+        return null;
+    }
+
+    /**
      * 查询long类型数据的位位索引数据
      *
      * @param props 标志属性数据
