@@ -246,6 +246,21 @@ public class DataParserJTT808 implements IDataParser {
                         }
 
                         break;
+                    case 0x0801:
+                        // 0x0801 - 多媒体数据上传
+                        // 0x8800 - 多媒体数据上传应答
+                        byteList.set(0, (byte) 0x81);
+                        byteList.set(0, (byte) 0x00);
+
+                        // 设置多媒体ID
+                        byteList.add(dataPackBytes[13]);
+                        byteList.add(dataPackBytes[14]);
+
+                        // 设置重传包总数
+                        byteList.add((byte) 0x00);
+
+                        // 设置重传包ID列表（默认不要求重传）
+                        // 0x00 -> 无
                     default:
                         // 0x8001 - 平台通用应答
                         byteList.set(0, (byte) 0x80);

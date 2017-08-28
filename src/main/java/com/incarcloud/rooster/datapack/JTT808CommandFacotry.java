@@ -156,7 +156,10 @@ public class JTT808CommandFacotry implements CommandFacotry {
                 System.out.println("## 0x8702 - 上报驾驶员身份信息请求");
                 break;
             case 0x8800:
-                /* 多媒体数据上传应答 */
+                /** 多媒体数据上传应答
+                 *
+                 * @see DataParserJTT808#createResponse(DataPack, ERespReason)
+                 */
                 System.out.println("## 0x8800 - 多媒体数据上传应答");
                 break;
             case 0x8801:
