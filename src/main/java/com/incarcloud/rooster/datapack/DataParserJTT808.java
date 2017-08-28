@@ -836,10 +836,112 @@ public class DataParserJTT808 implements IDataParser {
                     case 0x0801:
                         /* 多媒体数据上传 */
                         System.out.println("## 0x0801 - 多媒体数据上传");
+                        // 1.多媒体数据 ID
+                        mediaId = JTT808DataPackUtil.readDWord(buffer);
+                        JTT808DataPackUtil.debug("mediaId: " + mediaId);
+                        // 2.多媒体类型：0：图像；1：音频；2：视频；
+                        mediaClassify = JTT808DataPackUtil.readByte(buffer);
+                        JTT808DataPackUtil.debug("mediaClassify: " + mediaClassify);
+                        switch (mediaClassify) {
+                            case 0x00:
+                                // 0：图像
+                                JTT808DataPackUtil.debug("--图像");
+                                break;
+                            case 0x01:
+                                // 1：音频
+                                JTT808DataPackUtil.debug("--音频");
+                                break;
+                            case 0x02:
+                                // 2：视频
+                                JTT808DataPackUtil.debug("--视频");
+                                break;
+                        }
+                        // 3.多媒体格式编码：0：JPEG；1：TIF；2：MP3；3：WAV；4：WMV；
+                        mediaFormat = JTT808DataPackUtil.readByte(buffer);
+                        JTT808DataPackUtil.debug("mediaFormat: " + mediaFormat);
+                        switch (mediaFormat) {
+                            case 0x00:
+                                // 0：JPEG
+                                JTT808DataPackUtil.debug("--JPEG");
+                                break;
+                            case 0x01:
+                                // 1：TIF
+                                JTT808DataPackUtil.debug("--TIF");
+                                break;
+                            case 0x02:
+                                // 2：MP3
+                                JTT808DataPackUtil.debug("--MP3");
+                                break;
+                            case 0x03:
+                                // 3：WAV
+                                JTT808DataPackUtil.debug("--WAV");
+                                break;
+                            case 0x04:
+                                // 4：WMV
+                                JTT808DataPackUtil.debug("--WMV");
+                                break;
+                        }
+                        // 4.事件项编码：0：平台下发指令；1：定时动作；2：抢劫报警触发；3：碰撞侧翻报警触发；
+                        mediaEventCode = JTT808DataPackUtil.readByte(buffer);
+                        JTT808DataPackUtil.debug("mediaEventCode: " + mediaEventCode);
+                        switch (mediaEventCode) {
+                            case 0x00:
+                                // 0：平台下发指令
+                                JTT808DataPackUtil.debug("--平台下发指令");
+                                break;
+                            case 0x01:
+                                // 1：定时动作
+                                JTT808DataPackUtil.debug("--定时动作");
+                                break;
+                            case 0x02:
+                                // 2：抢劫报警触发
+                                JTT808DataPackUtil.debug("--抢劫报警触发");
+                                break;
+                            case 0x03:
+                                // 3：碰撞侧翻报警触发
+                                JTT808DataPackUtil.debug("--碰撞侧翻报警触发");
+                                break;
+                        }
+                        // 5.通道 ID
+                        mediaChannelId = JTT808DataPackUtil.readByte(buffer);
+                        JTT808DataPackUtil.debug("mediaChannelId: " + mediaChannelId);
+                        // 6.位置信息汇报(0x0200)消息体
+                        // TODO 位置基本信息数据
+                        // 7.多媒体数据包
+                        // TODO
                         break;
                     case 0x0805:
                         /* 摄像头立即拍摄命令应答 */
                         System.out.println("## 0x0805 - 摄像头立即拍摄命令应答");
+                        // 1.应答流水号
+                        responseMsgSeq = JTT808DataPackUtil.readWord(buffer);
+                        JTT808DataPackUtil.debug("responseMsgSeq: " + responseMsgSeq);
+                        // 2.结果：0：成功；1：失败；2：通道不支持
+                        int mediaResult = JTT808DataPackUtil.readByte(buffer);
+                        JTT808DataPackUtil.debug("mediaResult: " + mediaResult);
+                        switch (mediaResult) {
+                            case 0x00:
+                                // 0：成功
+                                JTT808DataPackUtil.debug("--成功");
+                                break;
+                            case 0x01:
+                                // 1：失败
+                                JTT808DataPackUtil.debug("--失败");
+                                break;
+                            case 0x02:
+                                // 2：通道不支持
+                                JTT808DataPackUtil.debug("--通道不支持");
+                                break;
+                        }
+                        // 3.多媒体 ID 个数
+                        int mediaTotal = JTT808DataPackUtil.readWord(buffer);
+                        JTT808DataPackUtil.debug("mediaTotal: " + mediaTotal);
+                        // 4.多媒体 ID 列表
+                        if(0 < mediaTotal) {
+                            for (int i = 0; i < mediaTotal; i++) {
+                                JTT808DataPackUtil.debug("--" + JTT808DataPackUtil.readBytes(buffer, 4));
+                            }
+                        }
                         break;
                     case 0x0802:
                         /* 存储多媒体数据检索应答 */
