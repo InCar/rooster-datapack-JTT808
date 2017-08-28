@@ -1,6 +1,8 @@
 package com.incarcloud.rooster.util;
 
 import com.incarcloud.rooster.datapack.DataPackAlarm;
+import com.incarcloud.rooster.datapack.DataPackObject;
+import com.incarcloud.rooster.datapack.DataPackPosition;
 import io.netty.buffer.ByteBuf;
 import io.netty.util.internal.StringUtil;
 
@@ -259,6 +261,71 @@ public class JTT808DataPackUtil extends DataPackUtil {
             return dateFormat.parse(dateString);
         }
         return null;
+    }
+
+    /**
+     * 读取一个位置数据
+     *
+     * @param buffer ByteBuf
+     * @param dataPackObject 基对象
+     * @param statusProps 状态位
+     * @return
+     * @throws ParseException
+     */
+    public static DataPackPosition readPosition(ByteBuf buffer, DataPackObject dataPackObject, long statusProps) throws ParseException {
+        DataPackPosition dataPackPosition = new DataPackPosition(dataPackObject);
+        // 1.纬度
+        double latitude = JTT808DataPackUtil.readLatitude(buffer, statusProps);
+        dataPackPosition.setLatitude(latitude);
+        JTT808DataPackUtil.debug("latitude: " + latitude);
+        // 2.经度
+        double longitude = JTT808DataPackUtil.readLongitude(buffer, statusProps);
+        dataPackPosition.setLongitude(longitude);
+        JTT808DataPackUtil.debug("longitude: " + longitude);
+        // 3.海拔高度
+        int altitude = JTT808DataPackUtil.readWord(buffer);
+        dataPackPosition.setAltitude(altitude);
+        JTT808DataPackUtil.debug("altitude: " + altitude);
+        // 4.速度
+        float speed = JTT808DataPackUtil.readSpeed(buffer);
+        dataPackPosition.setSpeed(speed);
+        JTT808DataPackUtil.debug("speed: " + speed);
+        // 5.方向
+        float direction = JTT808DataPackUtil.readWord(buffer);
+        dataPackPosition.setDirection(direction);
+        JTT808DataPackUtil.debug("direction: " + direction);
+        // 6.定位方式
+        int mode = 0;
+        String modeDesc = "无效数据";
+        // 6.1 位18 - GPS定位
+        if(queryLongBitContent(statusProps, 18)) {
+            mode = DataPackPosition.POSITION_MODE_GPS;
+            modeDesc = "GPS定位";
+        }
+        // 6.2 位19 - 北斗卫星定位
+        if(queryLongBitContent(statusProps, 19)) {
+            mode = DataPackPosition.POSITION_MODE_BEIDOU;
+            modeDesc = "北斗卫星定位";
+        }
+        // 6.3 位20 - GLONASS卫星定位
+        if(queryLongBitContent(statusProps, 20)) {
+            mode = DataPackPosition.POSITION_MODE_GLONASS;
+            modeDesc = "GLONASS卫星定位";
+        }
+        // 6.3 位21 - Galileo卫星定位
+        if(queryLongBitContent(statusProps, 21)) {
+            mode = DataPackPosition.POSITION_MODE_GALILEO;
+            modeDesc = "Galileo卫星定位";
+        }
+        JTT808DataPackUtil.debug("mode: " + mode);
+        JTT808DataPackUtil.debug("modeDesc: " + modeDesc);
+        dataPackPosition.setPositioMode(mode);
+        dataPackPosition.setPositioModeDesc(modeDesc);
+        // 7.定位时间
+        Date positionTime = readDate(buffer);
+        dataPackPosition.setPositionTime(positionTime);
+        JTT808DataPackUtil.debug("positionTime: " + positionTime);
+        return dataPackPosition;
     }
 
     /**

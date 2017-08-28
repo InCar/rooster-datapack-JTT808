@@ -66,7 +66,7 @@ public class DataParserJTT808Test {
     @Test
     public void testExtractBody() {
         DataPack dataPack = parser.extract(buffer).get(2);
-        parser.extractBody(dataPack);
+        Assert.assertNotEquals(0L, parser.extractBody(dataPack).size());
     }
 
     @Test

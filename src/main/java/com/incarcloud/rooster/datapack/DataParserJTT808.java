@@ -426,26 +426,53 @@ public class DataParserJTT808 implements IDataParser {
                     case 0x0100:
                         /* 终端注册 */
                         System.out.println("## 0x0100 - 终端注册");
+                        // 1.省域 ID
                         int provinceId = JTT808DataPackUtil.readWord(buffer);
                         JTT808DataPackUtil.debug("provinceId: " + provinceId);
+                        // 2.市县域 ID
                         int cityId = JTT808DataPackUtil.readWord(buffer);
                         JTT808DataPackUtil.debug("cityId: " + cityId);
+                        // 3.制造商 ID
                         String deviceManufacturerId = JTT808DataPackUtil.readByteArray(buffer, 5);
                         JTT808DataPackUtil.debug("deviceManufacturerId: " + deviceManufacturerId);
+                        // 4.终端型号
                         String deviceModel = JTT808DataPackUtil.readByteArray(buffer, 20);
                         JTT808DataPackUtil.debug("deviceModel: " + deviceModel);
+                        // 5.终端 ID
                         String deviceSID = JTT808DataPackUtil.readByteArray(buffer, 7);
                         JTT808DataPackUtil.debug("deviceSID: " + deviceSID);
+                        // 6.车牌颜色（按照 JT/T415-2006 的 5.4.12）
                         int colorId = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("colorId: " + colorId);
                         switch (colorId) {
                             case 0:
                                 // 未上牌时，取值为 0
+                                JTT808DataPackUtil.debug("--未上牌");
+                                break;
+                            case 1:
+                                // 1-蓝色
+                                JTT808DataPackUtil.debug("--蓝色");
+                                break;
+                            case 2:
+                                // 2-黄色
+                                JTT808DataPackUtil.debug("--黄色");
+                                break;
+                            case 3:
+                                // 3-黑色
+                                JTT808DataPackUtil.debug("--黑色");
+                                break;
+                            case 4:
+                                // 4-白色
+                                JTT808DataPackUtil.debug("--白色");
+                                break;
+                            case 9:
+                                // 9-其他
+                                JTT808DataPackUtil.debug("--其他");
                                 break;
                             default:
                                 // 车辆颜色
                         }
-                        // 车辆标识
+                        // 7.车辆标识
                         String vin = JTT808DataPackUtil.readString(buffer);
                         if(0 == colorId) {
                             // VIN
@@ -469,88 +496,96 @@ public class DataParserJTT808 implements IDataParser {
                     case 0x0104:
                         /* 查询终端参数应答 */
                         System.out.println("## 0x0104 - 查询终端参数应答");
-                        // TODO 参数项格式和定义见表 10
+                        // 1.应答流水号
+                        int responseMsgSeq = JTT808DataPackUtil.readWord(buffer);
+                        JTT808DataPackUtil.debug("responseMsgSeq: " + responseMsgSeq);
+                        // 2.应答参数个数
+                        int paramsTotal = JTT808DataPackUtil.readByte(buffer);
+                        JTT808DataPackUtil.debug("paramsTotal: " + paramsTotal);
+                        // 3.参数项列表
+                        if(0 < paramsTotal) {
+                            long paramId;
+                            int paramLength;
+                            byte[] paramValue;
+                            for (int i = 0; i < paramsTotal; i++) {
+                                // 3.1 参数 ID
+                                paramId = JTT808DataPackUtil.readDWord(buffer);
+                                JTT808DataPackUtil.debug("paramId: " + paramId);
+                                // 3.2 参数长度
+                                paramLength = JTT808DataPackUtil.readByte(buffer);
+                                JTT808DataPackUtil.debug("paramLength: " + paramLength);
+                                // 3.3 参数值
+                                // TODO 详细表示待完善
+                                paramValue = JTT808DataPackUtil.readBytes(buffer, paramLength);
+                                JTT808DataPackUtil.debug("paramValue: " + DatatypeConverter.printHexBinary(paramValue));
+                            }
+                        }
                         break;
                     case 0x0107:
                         /* 查询终端属性应答 */
                         System.out.println("## 0x0107 - 查询终端属性应答");
-                        int deviceType = JTT808DataPackUtil.readWord(buffer);
-                        JTT808DataPackUtil.debug("deviceType: " + deviceType);
+                        // 1.终端类型属性
+                        int deviceProps = JTT808DataPackUtil.readWord(buffer);
+                        JTT808DataPackUtil.debug("deviceProps: " + deviceProps);
+                        // TODO 详细表示待完善
+                        // 2.制造商 ID
                         deviceManufacturerId = JTT808DataPackUtil.readByteArray(buffer, 5);
                         JTT808DataPackUtil.debug("deviceManufacturerId: " + deviceManufacturerId);
+                        // 3.终端型号
                         deviceModel = JTT808DataPackUtil.readByteArray(buffer, 20);
                         JTT808DataPackUtil.debug("deviceModel: " + deviceModel);
+                        // 4.终端 ID
                         deviceSID = JTT808DataPackUtil.readByteArray(buffer, 7);
                         JTT808DataPackUtil.debug("deviceSID: " + deviceSID);
+                        // 5.终端 SIM 卡 ICCID
                         String deviceSIMICCID = JTT808DataPackUtil.readBCD(buffer, 10);
                         JTT808DataPackUtil.debug("deviceSIMICCID: " + deviceSIMICCID);
+                        // 6.终端硬件版本号
                         String hardwareVersion = JTT808DataPackUtil.readString(buffer, JTT808DataPackUtil.readByte(buffer));
                         JTT808DataPackUtil.debug("hardwareVersion: " + hardwareVersion);
+                        // 7.终端固件版本号
                         String firmwareVersion = JTT808DataPackUtil.readString(buffer, JTT808DataPackUtil.readByte(buffer));
                         JTT808DataPackUtil.debug("firmwareVersion: " + firmwareVersion);
+                        // 8.GNSS 模块属性
                         int gnssProps = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("gnssProps: " + gnssProps);
-                        // TODO gnssProps详情待解析
+                        // TODO 详细表示待完善
+                        // 9.通信模块属性
                         int communicationProps = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("communicationProps: " + communicationProps);
-                        // TODO communicationProps详情待解析
+                        // TODO 详细表示待完善
                         break;
                     case 0x0108:
                         /* 终端升级结果通知 */
                         System.out.println("## 0x0108 - 终端升级结果通知");
-                        // 升级类型：0：终端，12：道路运输证 IC 卡读卡器，52：北斗卫星定位模块
+                        // 1.升级类型：0：终端，12：道路运输证 IC 卡读卡器，52：北斗卫星定位模块
                         int upgradeType = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("upgradeType: " + upgradeType);
-                        // 升级结果：0：成功，1：失败，2：取消
+                        // 2.升级结果：0：成功，1：失败，2：取消
                         int upgradeResult = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("upgradeResult: " + upgradeResult);
                         break;
                     case 0x0201:
                         /* 位置信息查询应答 */
                         System.out.println("## 0x0201 - 位置信息查询应答");
-                        int responseMsgSeq = JTT808DataPackUtil.readWord(buffer);
+                        responseMsgSeq = JTT808DataPackUtil.readWord(buffer);
                         JTT808DataPackUtil.debug("responseMsgSeq: " + responseMsgSeq);
                     case 0x0200:
                         /* 位置信息汇报 */
                         // 1.位置基本信息
                         System.out.println("## 0x0200 - 位置信息汇报");
-                        // 1.1 报警标志
+                        // 1.报警标志位
                         long alarmProps = JTT808DataPackUtil.readDWord(buffer);
                         JTT808DataPackUtil.debug("alarmProps: " + alarmProps);
-                        // 1.2 状态标志
+                        // 2.状态位
                         long statusProps = JTT808DataPackUtil.readDWord(buffer);
-                        // TODO 表 25 状态位定义
                         JTT808DataPackUtil.debug("statusProps: " + statusProps);
-                        // 1.3 位置基本信息
-                        dataPackPosition = new DataPackPosition(dataPackObject);
-                        // 1.3.1 纬度
-                        double latitude = JTT808DataPackUtil.readLatitude(buffer, statusProps);
-                        dataPackPosition.setLatitude(latitude);
-                        JTT808DataPackUtil.debug("latitude: " + latitude);
-                        // 1.3.2 经度
-                        double longitude = JTT808DataPackUtil.readLongitude(buffer, statusProps);
-                        dataPackPosition.setLongitude(longitude);
-                        JTT808DataPackUtil.debug("longitude: " + longitude);
-                        // 1.3.3 海拔高度
-                        int altitude = JTT808DataPackUtil.readWord(buffer);
-                        dataPackPosition.setAltitude(altitude);
-                        JTT808DataPackUtil.debug("altitude: " + altitude);
-                        // 1.3.4 速度
-                        float speed = JTT808DataPackUtil.readSpeed(buffer);
-                        dataPackPosition.setSpeed(speed);
-                        JTT808DataPackUtil.debug("speed: " + speed);
-                        // 1.3.5 方向
-                        float direction = JTT808DataPackUtil.readWord(buffer);
-                        dataPackPosition.setDirection(direction);
-                        JTT808DataPackUtil.debug("direction: " + direction);
-                        // 1.3.6 时间
-                        Date positionTime = JTT808DataPackUtil.readDate(buffer);
-                        dataPackPosition.setPositionTime(positionTime);
-                        JTT808DataPackUtil.debug("positionTime: " + positionTime);
+                        // 3.位置数据
+                        dataPackPosition = JTT808DataPackUtil.readPosition(buffer, dataPackObject, statusProps);
                         //--add
                         dataPackTargetList.add(new DataPackTarget(dataPackPosition));
 
-                        // 1.4 解析报警标志数据
+                        // 4.解析报警标志位
                         List<DataPackAlarm.Alarm> alarmList = JTT808DataPackUtil.detailAlarmProps(alarmProps);
                         if(null != alarmList && 0 < alarmList.size()) {
                             dataPackAlarm = new DataPackAlarm(dataPackObject);
@@ -560,7 +595,21 @@ public class DataParserJTT808 implements IDataParser {
                             dataPackTargetList.add(new DataPackTarget(dataPackAlarm));
                         }
 
-                        // 2.位置附加信息项列表（可没有，根据消息头中的长度字段确定）
+                        // 4.位置附加数据
+                        if(28 < msgLength) {
+                            while(2 < buffer.readableBytes()) {
+                                // 4.1 附加信息 ID
+                                int extraMsgId = JTT808DataPackUtil.readByte(buffer);
+                                JTT808DataPackUtil.debug("extraMsgId: " + extraMsgId);
+                                // 4.2 附加信息长度
+                                int extraMsgLength = JTT808DataPackUtil.readByte(buffer);
+                                JTT808DataPackUtil.debug("extraMsgLength: " + extraMsgLength);
+                                // 4.3 附加信息
+                                byte[] extraMsgContent = JTT808DataPackUtil.readBytes(buffer, extraMsgLength);
+                                JTT808DataPackUtil.debug("extraMsgContent: " + DatatypeConverter.printHexBinary(extraMsgContent));
+                                System.out.println(buffer.readableBytes());
+                            }
+                        }
                         break;
                     case 0x0301:
                         /* 事件报告 */
