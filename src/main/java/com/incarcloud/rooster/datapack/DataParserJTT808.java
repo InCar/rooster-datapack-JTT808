@@ -5,6 +5,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.util.ReferenceCountUtil;
 
+import javax.xml.bind.DatatypeConverter;
 import java.util.*;
 
 /**
@@ -650,14 +651,187 @@ public class DataParserJTT808 implements IDataParser {
                     case 0x0704:
                         /* 定位数据批量上传 */
                         System.out.println("## 0x0704 - 定位数据批量上传");
+                        // 1.数据项个数
+                        int positionTotal = JTT808DataPackUtil.readWord(buffer);
+                        // 2.位置数据类型
+                        int positionType = JTT808DataPackUtil.readByte(buffer);
+                        switch (positionType) {
+                            case 0x00:
+                                // 0：正常位置批量汇报
+                                JTT808DataPackUtil.debug("--正常位置批量汇报");
+                                break;
+                            case 0x01:
+                                // 1：盲区补报
+                                JTT808DataPackUtil.debug("--盲区补报");
+                                break;
+                        }
+                        // 3.位置汇报数据项
+                        if(0 < positionTotal) {
+                            int positionLength;
+                            for (int i = 0; i < positionTotal; i++) {
+                                // 3.1 位置汇报数据体长度
+                                positionLength = JTT808DataPackUtil.readWord(buffer);
+                                JTT808DataPackUtil.debug("positionLength: " + positionLength);
+                                // TODO 8.12 位置信息汇报
+                            }
+                        }
                         break;
                     case 0x0705:
                         /* CAN 总线数据上传 */
                         System.out.println("## 0x0705 - CAN 总线数据上传");
+                        // 1.数据项个数
+                        int canTotal = JTT808DataPackUtil.readWord(buffer);
+                        JTT808DataPackUtil.debug("canTotal: " + canTotal);
+                        // 2.CAN 总线数据接收时间
+                        String canReceiveTime = JTT808DataPackUtil.readBCD(buffer, 5);
+                        JTT808DataPackUtil.debug("canReceiveTime: " + canReceiveTime);
+                        // 3.CAN 总线数据项
+                        if(0 < canTotal) {
+                            long canId;
+                            int canChannel;
+                            int canFrameType;
+                            int canCollectMode;
+                            byte[] canData;
+                            for (int i = 0; i < canTotal; i++) {
+                                // 3.1 CAN ID
+                                canId = JTT808DataPackUtil.readDWord(buffer);
+                                // 3.1.1 bit31 表示 CAN 通道号，0：CAN1，1：CAN2
+                                canChannel = (byte) (canId >> 31) & 0x01;
+                                JTT808DataPackUtil.debug("canChannel: " + canChannel);
+                                switch (canChannel) {
+                                    case 0x00:
+                                        // 0：CAN1
+                                        JTT808DataPackUtil.debug("--CAN1");
+                                        break;
+                                    case 0x01:
+                                        // 1：CAN2
+                                        JTT808DataPackUtil.debug("--CAN2");
+                                        break;
+                                }
+                                // 3.1.2 bit30 表示帧类型，0：标准帧，1：扩展帧
+                                canFrameType = (byte) (canId >> 30) & 0x01;
+                                JTT808DataPackUtil.debug("canFrameType: " + canFrameType);
+                                switch (canFrameType) {
+                                    case 0x00:
+                                        // 0：标准帧
+                                        JTT808DataPackUtil.debug("--标准帧");
+                                        break;
+                                    case 0x01:
+                                        // 1：扩展帧
+                                        JTT808DataPackUtil.debug("--扩展帧");
+                                        break;
+                                }
+                                // 3.1.3 bit29 表示数据采集方式，0：原始数据，1：采集区间的平均值
+                                canCollectMode = (byte) (canId >> 29) & 0x01;
+                                JTT808DataPackUtil.debug("canCollectMode: " + canCollectMode);
+                                switch (canCollectMode) {
+                                    case 0x00:
+                                        // 0：原始数据
+                                        JTT808DataPackUtil.debug("--原始数据");
+                                        break;
+                                    case 0x01:
+                                        // 1：采集区间的平均值
+                                        JTT808DataPackUtil.debug("--采集区间的平均值");
+                                        break;
+                                }
+                                // 3.1.4 bit28-bit0 表示 CAN 总线 ID
+                                canId = canId & 0x1FFFFFFF;
+                                JTT808DataPackUtil.debug("canId: " + canId);
+                                // 3.2 CAN DATA
+                                canData = JTT808DataPackUtil.readBytes(buffer, 8);
+                                JTT808DataPackUtil.debug("canData: " + DatatypeConverter.printHexBinary(canData));
+                            }
+                        }
                         break;
                     case 0x0800:
                         /* 多媒体事件信息上传 */
                         System.out.println("## 0x0800 - 多媒体事件信息上传");
+                        // 1.多媒体数据 ID
+                        long mediaId = JTT808DataPackUtil.readDWord(buffer);
+                        JTT808DataPackUtil.debug("mediaId: " + mediaId);
+                        // 2.多媒体类型：0：图像；1：音频；2：视频；
+                        int mediaClassify = JTT808DataPackUtil.readByte(buffer);
+                        JTT808DataPackUtil.debug("mediaClassify: " + mediaClassify);
+                        switch (mediaClassify) {
+                            case 0x00:
+                                // 0：图像
+                                JTT808DataPackUtil.debug("--图像");
+                                break;
+                            case 0x01:
+                                // 1：音频
+                                JTT808DataPackUtil.debug("--音频");
+                                break;
+                            case 0x02:
+                                // 2：视频
+                                JTT808DataPackUtil.debug("--视频");
+                                break;
+                        }
+                        // 3.多媒体格式编码：0：JPEG；1：TIF；2：MP3；3：WAV；4：WMV；
+                        int mediaFormat = JTT808DataPackUtil.readByte(buffer);
+                        JTT808DataPackUtil.debug("mediaFormat: " + mediaFormat);
+                        switch (mediaFormat) {
+                            case 0x00:
+                                // 0：JPEG
+                                JTT808DataPackUtil.debug("--JPEG");
+                                break;
+                            case 0x01:
+                                // 1：TIF
+                                JTT808DataPackUtil.debug("--TIF");
+                                break;
+                            case 0x02:
+                                // 2：MP3
+                                JTT808DataPackUtil.debug("--MP3");
+                                break;
+                            case 0x03:
+                                // 3：WAV
+                                JTT808DataPackUtil.debug("--WAV");
+                                break;
+                            case 0x04:
+                                // 4：WMV
+                                JTT808DataPackUtil.debug("--WMV");
+                                break;
+                        }
+                        // 4.事件项编码：0：平台下发指令；1：定时动作；2：抢劫报警触发；3：碰撞侧翻报警触发；4：门开拍照；
+                        //             5：门关拍照；6：车门由开变关，时速从＜20公里到超过20公里；7：定距拍照；
+                        int mediaEventCode = JTT808DataPackUtil.readByte(buffer);
+                        JTT808DataPackUtil.debug("mediaEventCode: " + mediaEventCode);
+                        switch (mediaEventCode) {
+                            case 0x00:
+                                // 0：平台下发指令
+                                JTT808DataPackUtil.debug("--平台下发指令");
+                                break;
+                            case 0x01:
+                                // 1：定时动作
+                                JTT808DataPackUtil.debug("--定时动作");
+                                break;
+                            case 0x02:
+                                // 2：抢劫报警触发
+                                JTT808DataPackUtil.debug("--抢劫报警触发");
+                                break;
+                            case 0x03:
+                                // 3：碰撞侧翻报警触发
+                                JTT808DataPackUtil.debug("--碰撞侧翻报警触发");
+                                break;
+                            case 0x04:
+                                // 4：门开拍照
+                                JTT808DataPackUtil.debug("--门开拍照");
+                            break;
+                            case 0x05:
+                                // 5：门关拍照
+                                JTT808DataPackUtil.debug("--门关拍照");
+                            break;
+                            case 0x06:
+                                // 6：车门由开变关，时速从＜20公里到超过20公里
+                                JTT808DataPackUtil.debug("--车门由开变关，时速从＜20公里到超过20公里");
+                            break;
+                            case 0x07:
+                                // 7：定距拍照
+                                JTT808DataPackUtil.debug("--定距拍照");
+                                break;
+                        }
+                        // 5.通道 ID
+                        int mediaChannelId = JTT808DataPackUtil.readByte(buffer);
+                        JTT808DataPackUtil.debug("mediaChannelId: " + mediaChannelId);
                         break;
                     case 0x0801:
                         /* 多媒体数据上传 */
