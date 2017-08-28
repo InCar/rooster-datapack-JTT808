@@ -946,18 +946,111 @@ public class DataParserJTT808 implements IDataParser {
                     case 0x0802:
                         /* 存储多媒体数据检索应答 */
                         System.out.println("## 0x0802 - 存储多媒体数据检索应答");
+                        // 1.应答流水号
+                        responseMsgSeq = JTT808DataPackUtil.readWord(buffer);
+                        JTT808DataPackUtil.debug("responseMsgSeq: " + responseMsgSeq);
+                        // 2.多媒体数据总项数
+                        mediaTotal = JTT808DataPackUtil.readWord(buffer);
+                        JTT808DataPackUtil.debug("mediaTotal: " + mediaTotal);
+                        // 3.检索项
+                        if(0 < mediaTotal) {
+                            for (int i = 0; i < mediaTotal; i++) {
+                                // 3.1 多媒体数据 ID
+                                mediaId = JTT808DataPackUtil.readDWord(buffer);
+                                JTT808DataPackUtil.debug("mediaId: " + mediaId);
+                                // 3.2 多媒体类型：0：图像；1：音频；2：视频；
+                                mediaClassify = JTT808DataPackUtil.readByte(buffer);
+                                JTT808DataPackUtil.debug("mediaClassify: " + mediaClassify);
+                                switch (mediaClassify) {
+                                    case 0x00:
+                                        // 0：图像
+                                        JTT808DataPackUtil.debug("--图像");
+                                        break;
+                                    case 0x01:
+                                        // 1：音频
+                                        JTT808DataPackUtil.debug("--音频");
+                                        break;
+                                    case 0x02:
+                                        // 2：视频
+                                        JTT808DataPackUtil.debug("--视频");
+                                        break;
+                                }
+                                // 3.3 通道 ID
+                                mediaChannelId = JTT808DataPackUtil.readByte(buffer);
+                                JTT808DataPackUtil.debug("mediaChannelId: " + mediaChannelId);
+                                // 3.4 事件项编码：0：平台下发指令；1：定时动作；2：抢劫报警触发；3：碰撞侧翻报警触发；
+                                mediaEventCode = JTT808DataPackUtil.readByte(buffer);
+                                JTT808DataPackUtil.debug("mediaEventCode: " + mediaEventCode);
+                                switch (mediaEventCode) {
+                                    case 0x00:
+                                        // 0：平台下发指令
+                                        JTT808DataPackUtil.debug("--平台下发指令");
+                                        break;
+                                    case 0x01:
+                                        // 1：定时动作
+                                        JTT808DataPackUtil.debug("--定时动作");
+                                        break;
+                                    case 0x02:
+                                        // 2：抢劫报警触发
+                                        JTT808DataPackUtil.debug("--抢劫报警触发");
+                                        break;
+                                    case 0x03:
+                                        // 3：碰撞侧翻报警触发
+                                        JTT808DataPackUtil.debug("--碰撞侧翻报警触发");
+                                        break;
+                                }
+                                // 3.5 位置信息汇报(0x0200)消息体
+                                // TODO 位置基本信息数据
+                            }
+                        }
                         break;
                     case 0x0900:
-                        /* 数据上行透传 */
+                        /* 数据上行透传-//暂时无用 */
                         System.out.println("## 0x0900 - 数据上行透传");
+                        // 1.透传消息类型
+                        int transMsgType = JTT808DataPackUtil.readByte(buffer);
+                        JTT808DataPackUtil.debug("transMsgType: " + transMsgType);
+                        switch (transMsgType) {
+                            case 0x00:
+                                // 0x00 - GNSS 模块详细定位数据
+                                JTT808DataPackUtil.debug("--");
+                                break;
+                            case 0x0B:
+                                // 0x0B - 道路运输证 IC 卡信息
+                                JTT808DataPackUtil.debug("--");
+                                break;
+                            case 0x41:
+                                // 0x41 - 串口 1 透传
+                                JTT808DataPackUtil.debug("--");
+                                break;
+                            case 0x42:
+                                // 0x42 - 串口 2 透传
+                                JTT808DataPackUtil.debug("--");
+                                break;
+                            default:
+                                // 0xF0-0xFF - 用户自定义透传消息
+                        }
+                        // 2.透传消息内容
+                        // 未定义数据类型
                         break;
                     case 0x0901:
-                        /* 数据压缩上报 */
+                        /* 数据压缩上报-//暂时无用 */
                         System.out.println("## 0x0901 - 数据压缩上报");
+                        // 1.压缩消息长度
+                        long gzipMsgLength = JTT808DataPackUtil.readDWord(buffer);
+                        JTT808DataPackUtil.debug("gzipMsgLength: " + gzipMsgLength);
+                        // 2.压缩消息体
+                        // 未定义数据类型
                         break;
                     case 0x0A00:
                         /* 终端 RSA 公钥 */
                         System.out.println("## 0x0A00 - 终端 RSA 公钥");
+                        // 1.终端 RSA 公钥{e,n}中的 e
+                        long rsaE = JTT808DataPackUtil.readDWord(buffer);
+                        JTT808DataPackUtil.debug("rsaE: " + rsaE);
+                        // 2.RSA 公钥{e,n}中的 n
+                        byte[] rsaN = JTT808DataPackUtil.readBytes(buffer, 128);
+                        JTT808DataPackUtil.debug("rsaN: " + rsaN);
                         break;
                     default:
                         /**
