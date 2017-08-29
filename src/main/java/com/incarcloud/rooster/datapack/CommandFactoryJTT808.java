@@ -7,19 +7,19 @@ import io.netty.buffer.ByteBuf;
  * JTT808命令工厂实现
  *
  * @author Aaric, created on 2017-08-25T10:29.
- * @since 1.0-SNAPSHOT
+ * @since 2.0
  */
-public class JTT808CommandFacotry implements CommandFacotry {
+public class CommandFactoryJTT808 implements CommandFactory {
 
     static {
         /**
          * 声明数据包版本与解析器类关系
          */
-        DataParserManager.register(DataParserJTT808.PROTOCOL_PREFIX + DataParserJTT808.PROTOCOL_VERSION, DataParserJTT808.class);
+        CommandFacotryManager.registerCommandFacotry(DataParserJTT808.PROTOCOL_PREFIX + DataParserJTT808.PROTOCOL_VERSION, CommandFactoryJTT808.class);
     }
 
     @Override
-    public ByteBuf createCommand(CommandType type) {
+    public ByteBuf createCommand(CommandType type, Object... args) {
         // 消息ID
         int msgId = 0x00;
         switch (msgId) {
