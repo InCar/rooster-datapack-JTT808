@@ -294,6 +294,9 @@ public class DataParserJTT808 implements IDataParser {
                 // 设置消息体属性
                 // 双字节，最后9个bit表示消息长度，所以&0xFE00在&0x05
                 int msgProps = (((dataPackBytes[3] & 0xFF) << 8) & (dataPackBytes[4] & 0xFF) & 0xFE00) | msgLen;
+                // 回复数据不分包(位13-分包：0-不分包；1-分包)
+                msgProps = msgProps & 0xDFFF;
+                // 设置长度信息
                 byteList.set(2, (byte) ((msgProps >> 8) & 0xFF));
                 byteList.set(3, (byte) (msgProps & 0xFF));
                 /*====================end---判断msgId回复消息---end====================*/
@@ -388,16 +391,6 @@ public class DataParserJTT808 implements IDataParser {
                 // 2.3 分包
                 int msgSubPack = (msgProps >> 13) & 0x0001;
                 JTT808DataPackUtil.debug("msgSubPack: " + msgSubPack);
-                switch (msgSubPack) {
-                    case 0:
-                        // 第 13 位为 0，则消息头中无消息包封装项字段
-                        JTT808DataPackUtil.debug("--无消息包封装项字段");
-                        break;
-                    case 1:
-                        // 第 13 位为 1 时表示消息体为长消息，进行分包发送处理
-                        JTT808DataPackUtil.debug("--分包发送处理");
-                        break;
-                }
 
                 // 3.终端手机号(设备号)
                 String deviceId = JTT808DataPackUtil.readBCD(buffer);
@@ -409,7 +402,27 @@ public class DataParserJTT808 implements IDataParser {
                 dataPackObject.setPackId(msgSeq);
                 JTT808DataPackUtil.debug("msgSeq: " + msgSeq);
 
-                // 5.检验时间（=当前系统时间）
+                // 5.消息包封装项
+                int msgSubPackTotal = 0;
+                int msgSubPackSeq = 0;
+                switch (msgSubPack) {
+                    case 0:
+                        // 第 13 位为 0，则消息头中无消息包封装项字段
+                        JTT808DataPackUtil.debug("--无消息包封装项字段");
+                        break;
+                    case 1:
+                        // 第 13 位为 1 时表示消息体为长消息，进行分包发送处理
+                        JTT808DataPackUtil.debug("--分包发送处理");
+                        // 5.1 消息总包数
+                        msgSubPackTotal = JTT808DataPackUtil.readWord(buffer);
+                        JTT808DataPackUtil.debug("--msgSubPackTotal: " + msgSubPackTotal);
+                        // 5.2 包序号
+                        msgSubPackSeq = JTT808DataPackUtil.readWord(buffer);
+                        JTT808DataPackUtil.debug("--msgSubPackSeq: " + msgSubPackSeq);
+                        break;
+                }
+
+                // 6.检验时间（=当前系统时间）
                 dataPackObject.setDetectionTime(Calendar.getInstance().getTime());
 
                 /* 消息体 */
@@ -958,98 +971,103 @@ public class DataParserJTT808 implements IDataParser {
                     case 0x0801:
                         /* 多媒体数据上传 */
                         System.out.println("## 0x0801 - 多媒体数据上传");
-                        // 1.多媒体数据 ID
-                        mediaId = JTT808DataPackUtil.readDWord(buffer);
-                        JTT808DataPackUtil.debug("mediaId: " + mediaId);
-                        // 2.多媒体类型：0：图像；1：音频；2：视频；
-                        mediaClassify = JTT808DataPackUtil.readByte(buffer);
-                        JTT808DataPackUtil.debug("mediaClassify: " + mediaClassify);
-                        switch (mediaClassify) {
-                            case 0x00:
-                                // 0：图像
-                                JTT808DataPackUtil.debug("--图像");
-                                break;
-                            case 0x01:
-                                // 1：音频
-                                JTT808DataPackUtil.debug("--音频");
-                                break;
-                            case 0x02:
-                                // 2：视频
-                                JTT808DataPackUtil.debug("--视频");
-                                break;
-                        }
-                        // 3.多媒体格式编码：0：JPEG；1：TIF；2：MP3；3：WAV；4：WMV；
-                        mediaFormat = JTT808DataPackUtil.readByte(buffer);
-                        JTT808DataPackUtil.debug("mediaFormat: " + mediaFormat);
-                        switch (mediaFormat) {
-                            case 0x00:
-                                // 0：JPEG
-                                JTT808DataPackUtil.debug("--JPEG");
-                                break;
-                            case 0x01:
-                                // 1：TIF
-                                JTT808DataPackUtil.debug("--TIF");
-                                break;
-                            case 0x02:
-                                // 2：MP3
-                                JTT808DataPackUtil.debug("--MP3");
-                                break;
-                            case 0x03:
-                                // 3：WAV
-                                JTT808DataPackUtil.debug("--WAV");
-                                break;
-                            case 0x04:
-                                // 4：WMV
-                                JTT808DataPackUtil.debug("--WMV");
-                                break;
-                        }
-                        // 4.事件项编码：0：平台下发指令；1：定时动作；2：抢劫报警触发；3：碰撞侧翻报警触发；
-                        mediaEventCode = JTT808DataPackUtil.readByte(buffer);
-                        JTT808DataPackUtil.debug("mediaEventCode: " + mediaEventCode);
-                        switch (mediaEventCode) {
-                            case 0x00:
-                                // 0：平台下发指令
-                                JTT808DataPackUtil.debug("--平台下发指令");
-                                break;
-                            case 0x01:
-                                // 1：定时动作
-                                JTT808DataPackUtil.debug("--定时动作");
-                                break;
-                            case 0x02:
-                                // 2：抢劫报警触发
-                                JTT808DataPackUtil.debug("--抢劫报警触发");
-                                break;
-                            case 0x03:
-                                // 3：碰撞侧翻报警触发
-                                JTT808DataPackUtil.debug("--碰撞侧翻报警触发");
-                                break;
-                        }
-                        // 5.通道 ID
-                        mediaChannelId = JTT808DataPackUtil.readByte(buffer);
-                        JTT808DataPackUtil.debug("mediaChannelId: " + mediaChannelId);
-                        // 6.位置信息汇报(0x0200)消息体
-                        // 6.1 报警标志位
-                        alarmProps = JTT808DataPackUtil.readDWord(buffer);
-                        JTT808DataPackUtil.debug("alarmProps: " + alarmProps);
-                        // 6.2 状态位
-                        statusProps = JTT808DataPackUtil.readDWord(buffer);
-                        JTT808DataPackUtil.debug("statusProps: " + statusProps);
-                        // 6.3 位置数据
-                        dataPackPosition = JTT808DataPackUtil.readPosition(buffer, dataPackObject, statusProps);
-                        //--add
-                        dataPackTargetList.add(new DataPackTarget(dataPackPosition));
-
-                        // 6.4 解析报警标志位
-                        alarmList = JTT808DataPackUtil.detailAlarmProps(alarmProps);
-                        if(null != alarmList && 0 < alarmList.size()) {
-                            dataPackAlarm = new DataPackAlarm(dataPackObject);
-                            dataPackAlarm.setPosition(dataPackPosition);
-                            dataPackAlarm.setAlarmList(alarmList);
+                        // 第1个子包
+                        if(1 == msgSubPackSeq && 0 < msgSubPackTotal) {
+                            // 1.多媒体数据 ID
+                            mediaId = JTT808DataPackUtil.readDWord(buffer);
+                            JTT808DataPackUtil.debug("mediaId: " + mediaId);
+                            // 2.多媒体类型：0：图像；1：音频；2：视频；
+                            mediaClassify = JTT808DataPackUtil.readByte(buffer);
+                            JTT808DataPackUtil.debug("mediaClassify: " + mediaClassify);
+                            switch (mediaClassify) {
+                                case 0x00:
+                                    // 0：图像
+                                    JTT808DataPackUtil.debug("--图像");
+                                    break;
+                                case 0x01:
+                                    // 1：音频
+                                    JTT808DataPackUtil.debug("--音频");
+                                    break;
+                                case 0x02:
+                                    // 2：视频
+                                    JTT808DataPackUtil.debug("--视频");
+                                    break;
+                            }
+                            // 3.多媒体格式编码：0：JPEG；1：TIF；2：MP3；3：WAV；4：WMV；
+                            mediaFormat = JTT808DataPackUtil.readByte(buffer);
+                            JTT808DataPackUtil.debug("mediaFormat: " + mediaFormat);
+                            switch (mediaFormat) {
+                                case 0x00:
+                                    // 0：JPEG
+                                    JTT808DataPackUtil.debug("--JPEG");
+                                    break;
+                                case 0x01:
+                                    // 1：TIF
+                                    JTT808DataPackUtil.debug("--TIF");
+                                    break;
+                                case 0x02:
+                                    // 2：MP3
+                                    JTT808DataPackUtil.debug("--MP3");
+                                    break;
+                                case 0x03:
+                                    // 3：WAV
+                                    JTT808DataPackUtil.debug("--WAV");
+                                    break;
+                                case 0x04:
+                                    // 4：WMV
+                                    JTT808DataPackUtil.debug("--WMV");
+                                    break;
+                            }
+                            // 4.事件项编码：0：平台下发指令；1：定时动作；2：抢劫报警触发；3：碰撞侧翻报警触发；
+                            mediaEventCode = JTT808DataPackUtil.readByte(buffer);
+                            JTT808DataPackUtil.debug("mediaEventCode: " + mediaEventCode);
+                            switch (mediaEventCode) {
+                                case 0x00:
+                                    // 0：平台下发指令
+                                    JTT808DataPackUtil.debug("--平台下发指令");
+                                    break;
+                                case 0x01:
+                                    // 1：定时动作
+                                    JTT808DataPackUtil.debug("--定时动作");
+                                    break;
+                                case 0x02:
+                                    // 2：抢劫报警触发
+                                    JTT808DataPackUtil.debug("--抢劫报警触发");
+                                    break;
+                                case 0x03:
+                                    // 3：碰撞侧翻报警触发
+                                    JTT808DataPackUtil.debug("--碰撞侧翻报警触发");
+                                    break;
+                            }
+                            // 5.通道 ID
+                            mediaChannelId = JTT808DataPackUtil.readByte(buffer);
+                            JTT808DataPackUtil.debug("mediaChannelId: " + mediaChannelId);
+                            // 6.位置信息汇报(0x0200)消息体
+                            // 6.1 报警标志位
+                            alarmProps = JTT808DataPackUtil.readDWord(buffer);
+                            JTT808DataPackUtil.debug("alarmProps: " + alarmProps);
+                            // 6.2 状态位
+                            statusProps = JTT808DataPackUtil.readDWord(buffer);
+                            JTT808DataPackUtil.debug("statusProps: " + statusProps);
+                            // 6.3 位置数据
+                            dataPackPosition = JTT808DataPackUtil.readPosition(buffer, dataPackObject, statusProps);
                             //--add
-                            dataPackTargetList.add(new DataPackTarget(dataPackAlarm));
+                            dataPackTargetList.add(new DataPackTarget(dataPackPosition));
+
+                            // 6.4 解析报警标志位
+                            alarmList = JTT808DataPackUtil.detailAlarmProps(alarmProps);
+                            if(null != alarmList && 0 < alarmList.size()) {
+                                dataPackAlarm = new DataPackAlarm(dataPackObject);
+                                dataPackAlarm.setPosition(dataPackPosition);
+                                dataPackAlarm.setAlarmList(alarmList);
+                                //--add
+                                dataPackTargetList.add(new DataPackTarget(dataPackAlarm));
+                            }
                         }
+
                         // 7.多媒体数据包
-                        // TODO
+                        byte[] mediaBytes = JTT808DataPackUtil.readBytes(buffer, buffer.readableBytes() - 2);
+                        System.out.println("mediaBytes: " + mediaBytes);
                         break;
                     case 0x0805:
                         /* 摄像头立即拍摄命令应答 */
