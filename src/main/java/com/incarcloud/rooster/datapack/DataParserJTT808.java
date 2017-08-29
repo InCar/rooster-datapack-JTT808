@@ -565,11 +565,6 @@ public class DataParserJTT808 implements IDataParser {
                         int upgradeResult = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("upgradeResult: " + upgradeResult);
                         break;
-                    case 0x0201:
-                        /* 位置信息查询应答 */
-                        System.out.println("## 0x0201 - 位置信息查询应答");
-                        responseMsgSeq = JTT808DataPackUtil.readWord(buffer);
-                        JTT808DataPackUtil.debug("responseMsgSeq: " + responseMsgSeq);
                     case 0x0200:
                         /* 位置信息汇报 */
                         // 1.位置基本信息
@@ -596,52 +591,103 @@ public class DataParserJTT808 implements IDataParser {
                         }
 
                         // 4.位置附加数据
-                        if(28 < msgLength) {
-                            //--add
-                            dataPackTargetList.addAll(JTT808DataPackUtil.readPositionExtra(buffer, dataPackPosition));
-                        }
+                        dataPackTargetList.addAll(JTT808DataPackUtil.readPositionExtra(buffer, dataPackPosition, msgLength - 28));
                         break;
+                    case 0x0201:
+                        /* 位置信息查询应答 */
+                        System.out.println("## 0x0201 - 位置信息查询应答");
+                        // 1.应答流水号
+                        responseMsgSeq = JTT808DataPackUtil.readWord(buffer);
+                        JTT808DataPackUtil.debug("responseMsgSeq: " + responseMsgSeq);
+                        // 2.报警标志位
+                        alarmProps = JTT808DataPackUtil.readDWord(buffer);
+                        JTT808DataPackUtil.debug("alarmProps: " + alarmProps);
+                        // 3.状态位
+                        statusProps = JTT808DataPackUtil.readDWord(buffer);
+                        JTT808DataPackUtil.debug("statusProps: " + statusProps);
+                        // 4.位置数据
+                        dataPackPosition = JTT808DataPackUtil.readPosition(buffer, dataPackObject, statusProps);
+                        //--add
+                        dataPackTargetList.add(new DataPackTarget(dataPackPosition));
+
+                        // 5.解析报警标志位
+                        alarmList = JTT808DataPackUtil.detailAlarmProps(alarmProps);
+                        if(null != alarmList && 0 < alarmList.size()) {
+                            dataPackAlarm = new DataPackAlarm(dataPackObject);
+                            dataPackAlarm.setPosition(dataPackPosition);
+                            dataPackAlarm.setAlarmList(alarmList);
+                            //--add
+                            dataPackTargetList.add(new DataPackTarget(dataPackAlarm));
+                        }
+
+                        // 6.位置附加数据
+                        dataPackTargetList.addAll(JTT808DataPackUtil.readPositionExtra(buffer, dataPackPosition, msgLength - 28 - 2));
                     case 0x0301:
                         /* 事件报告 */
                         System.out.println("## 0x0301 - 事件报告");
+                        // 1.事件 ID
                         int eventId = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("eventId: " + eventId);
                         break;
                     case 0x0302:
                         /* 提问应答 */
                         System.out.println("## 0x0302 - 提问应答");
+                        // 1.应答流水号
                         responseMsgSeq = JTT808DataPackUtil.readWord(buffer);
                         JTT808DataPackUtil.debug("responseMsgSeq: " + responseMsgSeq);
+                        // 2.答案 ID
                         int answerId = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("answerId: " + answerId);
                         break;
                     case 0x0303:
                         /* 信息点播/取消 */
                         System.out.println("## 0x0303 - 信息点播/取消");
+                        // 1.信息类型：0：删除终端全部信息项；1：更新菜单；2：追加菜单；3：修改菜单
                         int messageType = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("messageType: " + messageType);
+                        // 2.点播/取消标志：0：取消；1：点播
                         int messageResult = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("messageResult: " + messageResult);
                         break;
                     case 0x0500:
                         /* 车辆控制应答 */
                         System.out.println("## 0x0500 - 车辆控制应答");
+                        // 1.应答流水号
                         responseMsgSeq = JTT808DataPackUtil.readWord(buffer);
                         JTT808DataPackUtil.debug("responseMsgSeq: " + responseMsgSeq);
-                        // TODO 位置信息汇报消息体
+                        // 2.报警标志位
+                        alarmProps = JTT808DataPackUtil.readDWord(buffer);
+                        JTT808DataPackUtil.debug("alarmProps: " + alarmProps);
+                        // 3.状态位
+                        statusProps = JTT808DataPackUtil.readDWord(buffer);
+                        JTT808DataPackUtil.debug("statusProps: " + statusProps);
+                        // 4.位置数据
+                        dataPackPosition = JTT808DataPackUtil.readPosition(buffer, dataPackObject, statusProps);
+                        //--add
+                        dataPackTargetList.add(new DataPackTarget(dataPackPosition));
+
+                        // 5.解析报警标志位
+                        alarmList = JTT808DataPackUtil.detailAlarmProps(alarmProps);
+                        if(null != alarmList && 0 < alarmList.size()) {
+                            dataPackAlarm = new DataPackAlarm(dataPackObject);
+                            dataPackAlarm.setPosition(dataPackPosition);
+                            dataPackAlarm.setAlarmList(alarmList);
+                            //--add
+                            dataPackTargetList.add(new DataPackTarget(dataPackAlarm));
+                        }
+
+                        // 6.位置附加数据
+                        dataPackTargetList.addAll(JTT808DataPackUtil.readPositionExtra(buffer, dataPackPosition, msgLength - 28 - 2));
                         break;
                     case 0x0700:
                         /* 行驶记录仪数据上传 */
                         System.out.println("## 0x0700 - 行驶记录仪数据上传");
-                        // TODO GB/T 19056
+                        /*** 关联GB/T 19056，暂时不予实现 ***/
                         break;
                     case 0x0701:
                         /* 电子运单上报 */
                         System.out.println("## 0x0701 - 电子运单上报");
-                        // 1.电子运单长度
-                        Long waybillLength = JTT808DataPackUtil.readDWord(buffer);
-                        JTT808DataPackUtil.debug("waybillLength: " + waybillLength);
-                        // TODO 电子运单内容
+                        /*** 关联GB/T 19056，暂时不予实现 ***/
                         break;
                     case 0x0702:
                         /* 驾驶员身份信息采集上报 */
@@ -726,7 +772,29 @@ public class DataParserJTT808 implements IDataParser {
                                 // 3.1 位置汇报数据体长度
                                 positionLength = JTT808DataPackUtil.readWord(buffer);
                                 JTT808DataPackUtil.debug("positionLength: " + positionLength);
-                                // TODO 8.12 位置信息汇报
+                                // 3.2 报警标志位
+                                alarmProps = JTT808DataPackUtil.readDWord(buffer);
+                                JTT808DataPackUtil.debug("alarmProps: " + alarmProps);
+                                // 3.3 状态位
+                                statusProps = JTT808DataPackUtil.readDWord(buffer);
+                                JTT808DataPackUtil.debug("statusProps: " + statusProps);
+                                // 3.4 位置数据
+                                dataPackPosition = JTT808DataPackUtil.readPosition(buffer, dataPackObject, statusProps);
+                                //--add
+                                dataPackTargetList.add(new DataPackTarget(dataPackPosition));
+
+                                // 3.5 解析报警标志位
+                                alarmList = JTT808DataPackUtil.detailAlarmProps(alarmProps);
+                                if(null != alarmList && 0 < alarmList.size()) {
+                                    dataPackAlarm = new DataPackAlarm(dataPackObject);
+                                    dataPackAlarm.setPosition(dataPackPosition);
+                                    dataPackAlarm.setAlarmList(alarmList);
+                                    //--add
+                                    dataPackTargetList.add(new DataPackTarget(dataPackAlarm));
+                                }
+
+                                // 3.6 位置附加数据
+                                dataPackTargetList.addAll(JTT808DataPackUtil.readPositionExtra(buffer, dataPackPosition, positionLength - 28));
                             }
                         }
                         break;
@@ -960,7 +1028,26 @@ public class DataParserJTT808 implements IDataParser {
                         mediaChannelId = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("mediaChannelId: " + mediaChannelId);
                         // 6.位置信息汇报(0x0200)消息体
-                        // TODO 位置基本信息数据
+                        // 6.1 报警标志位
+                        alarmProps = JTT808DataPackUtil.readDWord(buffer);
+                        JTT808DataPackUtil.debug("alarmProps: " + alarmProps);
+                        // 6.2 状态位
+                        statusProps = JTT808DataPackUtil.readDWord(buffer);
+                        JTT808DataPackUtil.debug("statusProps: " + statusProps);
+                        // 6.3 位置数据
+                        dataPackPosition = JTT808DataPackUtil.readPosition(buffer, dataPackObject, statusProps);
+                        //--add
+                        dataPackTargetList.add(new DataPackTarget(dataPackPosition));
+
+                        // 6.4 解析报警标志位
+                        alarmList = JTT808DataPackUtil.detailAlarmProps(alarmProps);
+                        if(null != alarmList && 0 < alarmList.size()) {
+                            dataPackAlarm = new DataPackAlarm(dataPackObject);
+                            dataPackAlarm.setPosition(dataPackPosition);
+                            dataPackAlarm.setAlarmList(alarmList);
+                            //--add
+                            dataPackTargetList.add(new DataPackTarget(dataPackAlarm));
+                        }
                         // 7.多媒体数据包
                         // TODO
                         break;
@@ -1053,8 +1140,28 @@ public class DataParserJTT808 implements IDataParser {
                                         JTT808DataPackUtil.debug("--碰撞侧翻报警触发");
                                         break;
                                 }
-                                // 3.5 位置信息汇报(0x0200)消息体
-                                // TODO 位置基本信息数据
+                                // 3.5 位置信息汇报(0x0200)消息体-BYTE[28]
+                                // 表示拍摄或录制的起始时刻的位置基本信息数据
+                                // 3.5.1 报警标志位
+                                alarmProps = JTT808DataPackUtil.readDWord(buffer);
+                                JTT808DataPackUtil.debug("alarmProps: " + alarmProps);
+                                // 3.5.2 状态位
+                                statusProps = JTT808DataPackUtil.readDWord(buffer);
+                                JTT808DataPackUtil.debug("statusProps: " + statusProps);
+                                // 3.5.3 位置数据
+                                dataPackPosition = JTT808DataPackUtil.readPosition(buffer, dataPackObject, statusProps);
+                                //--add
+                                dataPackTargetList.add(new DataPackTarget(dataPackPosition));
+
+                                // 3.5.4 解析报警标志位
+                                alarmList = JTT808DataPackUtil.detailAlarmProps(alarmProps);
+                                if(null != alarmList && 0 < alarmList.size()) {
+                                    dataPackAlarm = new DataPackAlarm(dataPackObject);
+                                    dataPackAlarm.setPosition(dataPackPosition);
+                                    dataPackAlarm.setAlarmList(alarmList);
+                                    //--add
+                                    dataPackTargetList.add(new DataPackTarget(dataPackAlarm));
+                                }
                             }
                         }
                         break;

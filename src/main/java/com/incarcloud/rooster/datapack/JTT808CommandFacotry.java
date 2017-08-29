@@ -25,8 +25,7 @@ public class JTT808CommandFacotry implements CommandFacotry {
         switch (msgId) {
             case 0x8001:
                 /**
-                 * 平台通用应答
-                 *
+                 * 平台通用应答<br>
                  * @see DataParserJTT808#createResponse(DataPack, ERespReason)
                  */
                 System.out.println("## 0x8001 - 平台通用应答");
@@ -37,8 +36,7 @@ public class JTT808CommandFacotry implements CommandFacotry {
                 break;
             case 0x8100:
                 /**
-                 * 终端注册应答
-                 *
+                 * 终端注册应答<br>
                  * @see DataParserJTT808#createResponse(DataPack, ERespReason)
                  */
                 System.out.println("## 0x8100 - 终端注册应答");
@@ -144,11 +142,17 @@ public class JTT808CommandFacotry implements CommandFacotry {
                 System.out.println("## 0x8607 - 删除路线");
                 break;
             case 0x8700:
-                /* 行驶记录仪数据采集命令 */
+                /**
+                 * 行驶记录仪数据采集命令<br>
+                 * 关联GB/T 19056，暂时不予实现
+                 */
                 System.out.println("## 0x8700 - 行驶记录仪数据采集命令");
                 break;
             case 0x8701:
-                /* 行驶记录仪参数下传命令 */
+                /**
+                 * 行驶记录仪参数下传命令<br>
+                 * 关联GB/T 19056，暂时不予实现
+                 */
                 System.out.println("## 0x8701 - 行驶记录仪参数下传命令");
                 break;
             case 0x8702:
@@ -156,8 +160,8 @@ public class JTT808CommandFacotry implements CommandFacotry {
                 System.out.println("## 0x8702 - 上报驾驶员身份信息请求");
                 break;
             case 0x8800:
-                /** 多媒体数据上传应答
-                 *
+                /**
+                 * 多媒体数据上传应答<br>
                  * @see DataParserJTT808#createResponse(DataPack, ERespReason)
                  */
                 System.out.println("## 0x8800 - 多媒体数据上传应答");

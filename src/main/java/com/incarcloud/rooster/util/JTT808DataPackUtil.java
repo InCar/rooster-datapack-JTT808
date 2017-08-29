@@ -330,11 +330,12 @@ public class JTT808DataPackUtil extends DataPackUtil {
      * 读取位置数据附加信息，并封装返回DataPackTarget集合<br>
      *     考虑到数据包里面包含报警数据和极值数据，所以返回DataPackTarget集合
      *
-     * @param buffer
-     * @param dataPackPosition
+     * @param buffer ByteBuf
+     * @param dataPackPosition 位置信息
+     * @param extraMsgTotal 附加信息长度
      * @return
      */
-    public static List<DataPackTarget> readPositionExtra(ByteBuf buffer, DataPackPosition dataPackPosition) {
+    public static List<DataPackTarget> readPositionExtra(ByteBuf buffer, DataPackPosition dataPackPosition, int extraMsgTotal) {
         // 声明变量
         int extraMsgId;
         int extraMsgLength;
@@ -348,13 +349,18 @@ public class JTT808DataPackUtil extends DataPackUtil {
         DataPackAlarm dataPackAlarm;
 
         // 读取数据
-        while(2 < buffer.readableBytes()) {
+        int left = extraMsgTotal;
+        while(0 < left) {
+
             // 1.附加信息 ID
             extraMsgId = JTT808DataPackUtil.readByte(buffer);
             JTT808DataPackUtil.debug("extraMsgId: " + extraMsgId);
             // 2.附加信息长度
             extraMsgLength = JTT808DataPackUtil.readByte(buffer);
             JTT808DataPackUtil.debug("extraMsgLength: " + extraMsgLength);
+            // -.计算剩余
+            left -= (2 + extraMsgLength);
+
             // 3.附加信息
             // 3.1 判断
             // 0x05-0x10 - 保留
