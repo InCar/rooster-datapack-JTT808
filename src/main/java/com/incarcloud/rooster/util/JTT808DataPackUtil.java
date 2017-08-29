@@ -368,7 +368,7 @@ public class JTT808DataPackUtil extends DataPackUtil {
                 peak.setPeakDesc("里程，对应车上里程表读数");
                 //--add
                 peakList.add(peak);
-                break;
+                continue;
             }
             // 0x02 - 2 - 油量，WORD，1/10L，对应车上油量表读数
             if(0x02 == extraMsgId && 2 == extraMsgLength) {
@@ -379,7 +379,7 @@ public class JTT808DataPackUtil extends DataPackUtil {
                 peak.setPeakDesc("油量，对应车上油量表读数");
                 //--add
                 peakList.add(peak);
-                break;
+                continue;
             }
             // 0x03 - 2 - 行驶记录功能获取的速度，WORD，1/10km/h
             if(0x03 == extraMsgId && 2 == extraMsgLength) {
@@ -390,7 +390,7 @@ public class JTT808DataPackUtil extends DataPackUtil {
                 peak.setPeakDesc("行驶记录功能获取的速度");
                 //--add
                 peakList.add(peak);
-                break;
+                continue;
             }
             // 0x04 - 2 - 需要人工确认报警事件的 ID，WORD，从 1 开始计数
             if(0x04 == extraMsgId && 2 == extraMsgLength) {
@@ -399,7 +399,7 @@ public class JTT808DataPackUtil extends DataPackUtil {
                 alarm.setAlarmValue(String.valueOf(JTT808DataPackUtil.readWord(buffer)));
                 //--add
                 alarmList.add(alarm);
-                break;
+                continue;
             }
             // 0x11 - 1 或 5 - 超速报警附加信息见 表 28
             if(0x11 == extraMsgId && (1 == extraMsgLength || 5 == extraMsgLength)) {
@@ -416,45 +416,116 @@ public class JTT808DataPackUtil extends DataPackUtil {
                         stringBuffer.append(JTT808DataPackUtil.readByte(buffer));
                         stringBuffer.append("-");
                         stringBuffer.append(JTT808DataPackUtil.readDWord(buffer));
+                        alarm.setAlarmValue(stringBuffer.toString());
                         break;
                 }
                 alarm.setAlarmDesc("【位置类型：0：无特定位置；1：圆形区域；2：矩形区域；3：多边形区域；4：路段】－【区域或路段 ID】");
                 //--add
                 alarmList.add(alarm);
-                break;
+                continue;
             }
             // 0x12 - 6 - 进出区域/路线报警附加信息见 表 29
-            if(0x12 == extraMsgId) {
-
+            if(0x12 == extraMsgId && 6 == extraMsgLength) {
+                alarm = new DataPackAlarm.Alarm("进出区域/路线报警");
+                alarm.setAlarmCode(String.valueOf(extraMsgId));
+                StringBuffer stringBuffer = new StringBuffer();
+                stringBuffer.append(JTT808DataPackUtil.readByte(buffer));
+                stringBuffer.append("-");
+                stringBuffer.append(JTT808DataPackUtil.readDWord(buffer));
+                stringBuffer.append("-");
+                stringBuffer.append(JTT808DataPackUtil.readByte(buffer));
+                alarm.setAlarmValue(stringBuffer.toString());
+                alarm.setAlarmDesc("【位置类型：0：无特定位置；1：圆形区域；2：矩形区域；3：多边形区域；4：路段】－【区域或路段 ID】-【方向：0：进；1：出】");
+                //--add
+                alarmList.add(alarm);
+                continue;
             }
             // 0x13 - 7 - 路段行驶时间不足/过长报警附加信息见 表 30
-            if(0x13 == extraMsgId) {
-
+            if(0x13 == extraMsgId && 7 == extraMsgLength) {
+                alarm = new DataPackAlarm.Alarm("路段行驶时间不足/过长报警");
+                alarm.setAlarmCode(String.valueOf(extraMsgId));
+                StringBuffer stringBuffer = new StringBuffer();
+                stringBuffer.append(JTT808DataPackUtil.readDWord(buffer));
+                stringBuffer.append("-");
+                stringBuffer.append(JTT808DataPackUtil.readWord(buffer));
+                stringBuffer.append("-");
+                stringBuffer.append(JTT808DataPackUtil.readByte(buffer));
+                alarm.setAlarmValue(stringBuffer.toString());
+                alarm.setAlarmDesc("【路段 ID】-【路段行驶时间:=单位为秒（s）】-【结果：0：不足；1：过长】");
+                //--add
+                alarmList.add(alarm);
+                continue;
             }
             // 0x25 - 4 - 扩展车辆信号状态位，定义见 表 31
-            if(0x25 == extraMsgId) {
-
+            if(0x25 == extraMsgId && 4 == extraMsgLength) {
+                // TODO 表 31 扩展车辆信号状态位
+                JTT808DataPackUtil.debug("车辆信号状态: " + JTT808DataPackUtil.readBytes(buffer, 4));
+                continue;
             }
             // 0x2A - 2 - IO状态位，定义见 表 32
-            if(0x2A == extraMsgId) {
-
+            if(0x2A == extraMsgId && 2 == extraMsgLength) {
+                // TODO 表 32 IO 状态位
+                JTT808DataPackUtil.debug("IO状态: " + JTT808DataPackUtil.readBytes(buffer, 2));
+                continue;
             }
             // 0x2B - 4 - 模拟量，bit0-15，AD0；bit16-31，AD1。
-            if(0x2B == extraMsgId) {
-
+            if(0x2B == extraMsgId && 4 == extraMsgLength) {
+                // bit16-31，AD1
+                peak = new DataPackPeak.Peak();
+                peak.setPeakId(extraMsgId);
+                peak.setPeakName("AD1");
+                peak.setPeakValue(String.valueOf(JTT808DataPackUtil.readWord(buffer)));
+                //--add
+                peakList.add(peak);
+                // bit0-15，AD0
+                peak = new DataPackPeak.Peak();
+                peak.setPeakId(extraMsgId);
+                peak.setPeakName("AD0");
+                peak.setPeakValue(String.valueOf(JTT808DataPackUtil.readWord(buffer)));
+                //--add
+                peakList.add(peak);
+                continue;
             }
             // 0x30 - 1 - BYTE，无线通信网络信号强度
-            if(0x30 == extraMsgId) {
-
+            if(0x30 == extraMsgId && 1 == extraMsgLength) {
+                peak = new DataPackPeak.Peak();
+                peak.setPeakId(extraMsgId);
+                peak.setPeakName("无线通信网络信号强度");
+                peak.setPeakValue(String.valueOf(JTT808DataPackUtil.readByte(buffer)));
+                //--add
+                peakList.add(peak);
+                continue;
             }
             // 0x31 - 1 - BYTE，GNSS 定位卫星数
-            if(0x31 == extraMsgId) {
-
+            if(0x31 == extraMsgId && 1 == extraMsgLength) {
+                peak = new DataPackPeak.Peak();
+                peak.setPeakId(extraMsgId);
+                peak.setPeakName("GNSS 定位卫星数");
+                peak.setPeakValue(String.valueOf(JTT808DataPackUtil.readByte(buffer)));
+                //--add
+                peakList.add(peak);
+                continue;
             }
 
-            // 无匹配则释放
+            // 无法解析，直接释放
             JTT808DataPackUtil.readBytes(buffer, extraMsgLength);
         }
+
+        // 组装报警数据
+        if(null != alarmList && 0 < alarmList.size()) {
+            dataPackAlarm = new DataPackAlarm(dataPackPosition);
+            dataPackAlarm.setAlarmList(alarmList);
+            dataPackAlarm.setPosition(dataPackPosition);
+            dataPackTargetList.add(new DataPackTarget(dataPackAlarm));
+        }
+
+        // 组装极值数据
+        if(null != peakList && 0 < peakList.size()) {
+            dataPackPeak = new DataPackPeak(dataPackPosition);
+            dataPackPeak.setPeakList(peakList);
+            dataPackTargetList.add(new DataPackTarget(dataPackPeak));
+        }
+
         return dataPackTargetList;
     }
 
