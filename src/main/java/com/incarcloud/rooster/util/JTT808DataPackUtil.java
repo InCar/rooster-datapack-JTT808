@@ -148,6 +148,21 @@ public class JTT808DataPackUtil extends DataPackUtil {
     }
 
     /**
+     * 获得DWORD的字节码列表信息(4个字节)
+     *
+     * @param integer 数值
+     * @return
+     */
+    public static List<Byte> getDWordByteList(int integer) {
+        byte[] bytes = getIntegerBytes(integer, 4);
+        List<Byte> byteList = new ArrayList<>();
+        for (int i = 0; i < bytes.length; i++) {
+            byteList.add(bytes[i]);
+        }
+        return byteList;
+    }
+
+    /**
      * 获得BCD码字符串的字节码列表信息
      *
      * @param number　获得BCD码字符串

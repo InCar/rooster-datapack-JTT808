@@ -18,11 +18,21 @@ public class CommandFactoryJTT808Test {
     public void testCreateCommand() {
         // 初始化
         Object[] args;
+        ByteBuf commandBuffer;
         CommandFactory commandFactory = new CommandFactoryJTT808();
 
         // 0x8003 - 补传分包请求
-        args = new Object[] {"013300312707", 2, 2, new int[]{1, 2}};
-        ByteBuf commandBuffer = commandFactory.createCommand(CommandType.REISSUE_PACK, args);
+        /*args = new Object[] {"013300312707", 2, 2, new int[]{1, 2}};
+        commandBuffer = commandFactory.createCommand(CommandType.REISSUE_PACK, args);*/
+
+        // 0x8100 - 终端注册应答
+        // 示例设置终端心跳发送间隔(0x0001)10s
+        /*args = new Object[] {"013300312707", 1, new byte[]{0x00, 0x00, 0x00, 0x01, 0x04, 0x00, 0x00, 0x00, 0x0A}};
+        commandBuffer = commandFactory.createCommand(CommandType.SET_PARAMS, args);*/
+
+        // 0x8104 - 查询终端参数
+        args = new Object[] {"013300312707"};
+        commandBuffer = commandFactory.createCommand(CommandType.QUERY_PARAMS, args);
 
         // 打印数据包，并释放buffer
         System.out.println(ByteBufUtil.hexDump(commandBuffer).toUpperCase());

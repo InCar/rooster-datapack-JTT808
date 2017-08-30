@@ -94,7 +94,7 @@ public class CommandFactoryJTT808 implements CommandFactory {
                     byteList.add(JTT808DataPackUtil.getIntegerByte(msgIds[i]));
                 }
 
-                // 2.设置消息长度
+                // 3.设置消息长度
                 msgLength = 2 + msgTotal;
                 break;
 //            case 0x8100:
@@ -104,14 +104,48 @@ public class CommandFactoryJTT808 implements CommandFactory {
 //                 */
 //                System.out.println("## 0x8100 - 终端注册应答");
 //                break;
-//            case 0x8103:
-//                /* 设置终端参数 */
-//                System.out.println("## 0x8103 - 设置终端参数");
-//                break;
-//            case 0x8104:
-//                /* 查询终端参数 */
-//                System.out.println("## 0x8104 - 查询终端参数");
-//                break;
+            case SET_PARAMS:
+                /* 设置终端参数 */
+                System.out.println("## 0x8103 - 设置终端参数");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-参数总数(paramTotal:Integer)
+                 *   2-参数项列表(paramListBytes: byte[]，按照表 11 终端参数项数据格式传入字节数组)
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x81);
+                byteList.set(1, (byte) 0x03);
+
+                // 2.消息体
+                // 2.1 参数总数
+                int paramTotal = (int) args[1];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(paramTotal));
+                // 2.2 参数项列表
+                byte[] paramListBytes = (byte[]) args[2];
+                for (int i = 0; i < paramListBytes.length; i++) {
+                    byteList.add(paramListBytes[i]);
+                }
+
+                // 3.设置消息长度
+                msgLength = 1 + paramListBytes.length;
+                break;
+            case QUERY_PARAMS:
+                /* 查询终端参数 */
+                System.out.println("## 0x8104 - 查询终端参数");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x81);
+                byteList.set(1, (byte) 0x04);
+
+                // 2.消息体(空)
+
+                // 3.设置消息长度
+                msgLength = 0;
+                break;
 //            case 0x8105:
 //                /* 终端控制 */
 //                System.out.println("## 0x8105 - 终端控制");
