@@ -205,7 +205,7 @@ public class DataParserJTT808 implements IDataParser {
                 /*====================begin-判断msgId回复消息-begin====================*/
                 // 消息ID
                 int msgId = ((dataPackBytes[1] & 0xFF) << 8) | (dataPackBytes[2] & 0xFF);
-                int msgLen;
+                int msgLength;
                 byte statusCode;
 
                 // 根据msgId回复信息，否则使用通用应答
@@ -214,7 +214,7 @@ public class DataParserJTT808 implements IDataParser {
                         // 0x0100 - 终端注册
                         // 0x8100 - 终端注册应答
                         byteList.set(0, (byte) 0x81);
-                        byteList.set(0, (byte) 0x00);
+                        byteList.set(1, (byte) 0x00);
 
                         // 设置对应的终端消息的流水号
                         byteList.add(dataPackBytes[11]);
@@ -234,13 +234,13 @@ public class DataParserJTT808 implements IDataParser {
                                     byteList.add(authCodeBytes[i]);
                                 }
                                 // 消息长度
-                                msgLen = 3 + authCodeBytes.length & 0x01FF;
+                                msgLength = 3 + authCodeBytes.length & 0x01FF;
                                 break;
                             default:
                                 // 其他
                                 statusCode = 0x01;
                                 // 消息长度：3个字节
-                                msgLen = 3 & 0x01FF;
+                                msgLength = 3 & 0x01FF;
                                 //--add
                                 byteList.add(statusCode);
                         }
@@ -250,7 +250,7 @@ public class DataParserJTT808 implements IDataParser {
                         // 0x0801 - 多媒体数据上传
                         // 0x8800 - 多媒体数据上传应答
                         byteList.set(0, (byte) 0x81);
-                        byteList.set(0, (byte) 0x00);
+                        byteList.set(1, (byte) 0x00);
 
                         // 设置多媒体ID
                         byteList.add(dataPackBytes[13]);
@@ -288,12 +288,12 @@ public class DataParserJTT808 implements IDataParser {
                         byteList.add(statusCode);
 
                         // 消息长度：平台通用应答回复5个字节：【应答流水号】+【应答 ID】+【结果】
-                        msgLen = 5 & 0x01FF;
+                        msgLength = 5 & 0x01FF;
                 }
 
                 // 设置消息体属性
                 // 双字节，最后9个bit表示消息长度，所以&0xFE00在&0x05
-                int msgProps = (((dataPackBytes[3] & 0xFF) << 8) & (dataPackBytes[4] & 0xFF) & 0xFE00) | msgLen;
+                int msgProps = (((dataPackBytes[3] & 0xFF) << 8) & (dataPackBytes[4] & 0xFF) & 0xFE00) | msgLength;
                 // 回复数据不分包(位13-分包：0-不分包；1-分包)
                 msgProps = msgProps & 0xDFFF;
                 // 设置长度信息

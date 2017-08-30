@@ -67,31 +67,6 @@ public class JTT808DataPackUtil extends DataPackUtil {
     }
 
     /**
-     * 读取指定长度BCD码字符串数据<br>
-     *     使用复合BCD码，一个字节表示2个十进制数字
-     *
-     * @param buffer ByteBuf
-     * @param length 指定长度
-     * @return
-     */
-    public static String readBCD(ByteBuf buffer, int length) {
-        if(null == buffer) {
-            throw new IllegalArgumentException("buffer is null");
-        }
-        if(0 < length) {
-            int number;
-            StringBuffer stringBuffer = new StringBuffer();
-            for (int i = 0; i < length; i++) {
-                number = readByte(buffer);
-                stringBuffer.append(number >> 4 & 0x0F);
-                stringBuffer.append(number & 0x0F);
-            }
-            return stringBuffer.toString();
-        }
-        return null;
-    }
-
-    /**
      * 读取指定长度字节数组数据
      *
      * @param buffer ByteBuf
@@ -145,6 +120,46 @@ public class JTT808DataPackUtil extends DataPackUtil {
         byte[] stringBytes = new byte[length];
         buffer.readBytes(stringBytes);
         return new String(stringBytes, "GBK");
+    }
+
+    /**
+     * 获得整型数值的字节码信息(1个字节)
+     *
+     * @param integer　数值
+     * @return
+     */
+    public static byte getIntegerByte(int integer) {
+        return (byte) integer;
+    }
+
+    /**
+     * 获得WORD的字节码列表信息(2个字节)
+     *
+     * @param integer 数值
+     * @return
+     */
+    public static List<Byte> getWordByteList(int integer) {
+        byte[] bytes = getIntegerBytes(integer, 2);
+        List<Byte> byteList = new ArrayList<>();
+        for (int i = 0; i < bytes.length; i++) {
+            byteList.add(bytes[i]);
+        }
+        return byteList;
+    }
+
+    /**
+     * 获得BCD码字符串的字节码列表信息
+     *
+     * @param number　获得BCD码字符串
+     * @return
+     */
+    public static List<Byte> getBCDByteList(String number) {
+        byte[] bytes = getBCDBytes(number);
+        List<Byte> byteList = new ArrayList<>();
+        for (int i = 0; i < bytes.length; i++) {
+            byteList.add(bytes[i]);
+        }
+        return byteList;
     }
 
     /**
