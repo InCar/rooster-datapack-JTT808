@@ -181,6 +181,8 @@ public class CommandFactoryJTT808 implements CommandFactory {
                 /**
                  * 参数说明：
                  *   0-设置终端手机号(deviceId:String)
+                 *   1-参数总数(paramTotal:int)
+                 *   2-参数 ID 列表(params:int[])
                  */
                 // 1.设置消息ID
                 byteList.set(0, (byte) 0x81);
@@ -199,26 +201,131 @@ public class CommandFactoryJTT808 implements CommandFactory {
                 // 3.设置消息长度
                 msgLength = 1 + (4 * paramTotal);
                 break;
-//            case 0x8107:
-//                /* 查询终端属性 */
-//                System.out.println("## 0x8107 - 查询终端属性");
-//                break;
-//            case 0x8108:
-//                /* 下发终端升级包 */
-//                System.out.println("## 0x8108 - 下发终端升级包");
-//                break;
-//            case 0x8201:
-//                /* 位置信息查询 */
-//                System.out.println("## 0x8201 - 位置信息查询");
-//                break;
-//            case 0x8202:
-//                /* 临时位置跟踪控制 */
-//                System.out.println("## 0x8202 - 临时位置跟踪控制");
-//                break;
-//            case 0x8203:
-//                /* 人工确认报警消息 */
-//                System.out.println("## 0x8203 - 人工确认报警消息");
-//                break;
+            case QUERY_ALL_ATTRS:
+                /* 查询终端属性 */
+                System.out.println("## 0x8107 - 查询终端属性");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x81);
+                byteList.set(1, (byte) 0x07);
+
+                // 2.消息体(空)
+
+                // 3.设置消息长度
+                msgLength = 0;
+                break;
+            case UPGRADE:
+                /* 下发终端升级包 */
+                System.out.println("## 0x8108 - 下发终端升级包");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-升级类型(upgradeType:int)
+                 *   2-制造商 ID(manufacturerIdBytes:byte[5])
+                 *   3-版本号(upgradeersion:String)
+                 *   4-升级数据包(upgradePackBytes)
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x81);
+                byteList.set(1, (byte) 0x08);
+
+                // 2.消息体(空)
+                // 2.1 升级类型
+                int upgradeType = (int) args[1];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(upgradeType));
+                // 2.2 制造商 ID
+                byte[] manufacturerIdBytes = (byte[]) args[2];
+                for (int i = 0; i < 5; i++) {
+                    byteList.add(manufacturerIdBytes[i]);
+                }
+                // 2.3 版本号长度
+                String upgradeVersion = (String) args[3];
+                int upgradeVersionLength = upgradeVersion.length();
+                byteList.add(JTT808DataPackUtil.getIntegerByte(upgradeVersionLength));
+                // 2.4 版本号
+                byte[] upgradeVersionBytes = upgradeVersion.getBytes();
+                for (int i = 0; i < upgradeVersionBytes.length; i++) {
+                    byteList.add(upgradeVersionBytes[i]);
+                }
+                // 2.5 升级数据包长度
+                byte[] upgradePackBytes = (byte[]) args[4];
+                int upgradePackLength = upgradePackBytes.length;
+                byteList.addAll(JTT808DataPackUtil.getDWordByteList(upgradePackLength));
+                // 2.6 升级数据包
+                for (int i = 0; i < upgradePackBytes.length; i++) {
+                    byteList.add(upgradePackBytes[i]);
+                }
+
+                // 3.设置消息长度
+                msgLength = 10 + upgradeVersionLength + upgradePackLength;
+                break;
+            case QUERY_POSITION:
+                /* 位置信息查询 */
+                System.out.println("## 0x8201 - 位置信息查询");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x82);
+                byteList.set(1, (byte) 0x01);
+
+                // 2.消息体(空)
+
+                // 3.设置消息长度
+                msgLength = 0;
+                break;
+            case TRACKING_POSITION:
+                /* 临时位置跟踪控制 */
+                System.out.println("## 0x8202 - 临时位置跟踪控制");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-时间间隔(intervalSeconds:int)
+                 *   2-位置跟踪有效期(expireSeconds:int)
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x82);
+                byteList.set(1, (byte) 0x02);
+
+                // 2.消息体
+                // 2.1 时间间隔
+                int intervalSeconds = (int) args[1];
+                byteList.addAll(JTT808DataPackUtil.getWordByteList(intervalSeconds));
+                // 2.2 位置跟踪有效期
+                int expireSeconds = (int) args[2];
+                byteList.addAll(JTT808DataPackUtil.getDWordByteList(expireSeconds));
+
+                // 3.设置消息长度
+                msgLength = 6;
+                break;
+            case CONFIRM_ALARM:
+                /* 人工确认报警消息 */
+                System.out.println("## 0x8203 - 人工确认报警消息");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-报警消息流水号(msgSeq:int)
+                 *   2-人工确认报警类型(alarmType:int)
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x82);
+                byteList.set(1, (byte) 0x02);
+
+                // 2.消息体
+                // 2.1 报警消息流水号
+                msgSeq = (int) args[1];
+                byteList.addAll(JTT808DataPackUtil.getWordByteList(msgSeq));
+                // 2.2 人工确认报警类型
+                int alarmType = (int) args[2];
+                byteList.addAll(JTT808DataPackUtil.getDWordByteList(alarmType));
+
+                // 3.设置消息长度
+                msgLength = 6;
+                break;
 //            case 0x8300:
 //                /* 文本信息下发 */
 //                System.out.println("## 0x8300 - 文本信息下发");

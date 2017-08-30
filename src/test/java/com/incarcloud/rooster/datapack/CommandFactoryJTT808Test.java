@@ -39,8 +39,28 @@ public class CommandFactoryJTT808Test {
         commandBuffer = commandFactory.createCommand(CommandType.TERMINAL_CONTROL, args);*/
 
         // 0x8106 - 查询指定终端参数
-        args = new Object[] {"013300312707", 3, new int[]{1, 2, 3}};
-        commandBuffer = commandFactory.createCommand(CommandType.QUERY_CUSTOM_PARAMS, args);
+        /*args = new Object[] {"013300312707", 3, new int[]{1, 2, 3}};
+        commandBuffer = commandFactory.createCommand(CommandType.QUERY_CUSTOM_PARAMS, args);*/
+
+        // 0x8107 - 查询终端属性
+        /*args = new Object[] {"013300312707"};
+        commandBuffer = commandFactory.createCommand(CommandType.QUERY_ALL_ATTRS, args);*/
+
+        // 0x8108 - 下发终端升级包
+        /*args = new Object[] {"013300312707", 0, new byte[]{0x01, 0x02, 0x03, 0x04, 0x05}, "V2.0.0", new byte[]{0x00, 0x00, 0x00}};
+        commandBuffer = commandFactory.createCommand(CommandType.UPGRADE, args);*/
+
+        // 0x8201 - 位置信息查询
+        /*args = new Object[] {"013300312707"};
+        commandBuffer = commandFactory.createCommand(CommandType.QUERY_POSITION, args);*/
+
+        // 0x8202 - 临时位置跟踪控制
+        /*args = new Object[] {"013300312707", 10, 30000};
+        commandBuffer = commandFactory.createCommand(CommandType.TRACKING_POSITION, args);*/
+
+        // 0x8203 - 人工确认报警消息
+        args = new Object[] {"013300312707", 1, 1};
+        commandBuffer = commandFactory.createCommand(CommandType.CONFIRM_ALARM, args);
 
         // 打印数据包，并释放buffer
         System.out.println(ByteBufUtil.hexDump(commandBuffer).toUpperCase());
