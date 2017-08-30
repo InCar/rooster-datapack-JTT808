@@ -24,7 +24,7 @@ public class CommandFactoryJTT808 implements CommandFactory {
     }
 
     @Override
-    public ByteBuf createCommand(CommandType type, Object... args) {
+    public ByteBuf createCommand(CommandType type, Object... args) throws Exception {
         // 基本验证，必须有参数，第一个为终端手机号，即设备号
         if(null == args && 0 < args.length) {
             throw new IllegalArgumentException("args is null");
@@ -313,7 +313,7 @@ public class CommandFactoryJTT808 implements CommandFactory {
                  */
                 // 1.设置消息ID
                 byteList.set(0, (byte) 0x82);
-                byteList.set(1, (byte) 0x02);
+                byteList.set(1, (byte) 0x03);
 
                 // 2.消息体
                 // 2.1 报警消息流水号
@@ -326,14 +326,78 @@ public class CommandFactoryJTT808 implements CommandFactory {
                 // 3.设置消息长度
                 msgLength = 6;
                 break;
-//            case 0x8300:
-//                /* 文本信息下发 */
-//                System.out.println("## 0x8300 - 文本信息下发");
-//                break;
-//            case 0x8301:
-//                /* 事件设置 */
-//                System.out.println("## 0x8301 - 事件设置");
-//                break;
+            case SEND_TEXT:
+                /* 文本信息下发 */
+                System.out.println("## 0x8300 - 文本信息下发");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-标志(textType:int)
+                 *   2-文本信息(textString:String)
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x83);
+                byteList.set(1, (byte) 0x00);
+
+                // 2.消息体
+                // 2.1 标志
+                int textType = (int) args[1];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(textType));
+                // 2.2 文本信息
+                String textString = (String) args[2];
+                byte[] textStringBytes = JTT808DataPackUtil.getStringBytes(textString);
+                for (int i = 0; i < textStringBytes.length; i++) {
+                    byteList.add(textStringBytes[i]);
+                }
+
+                // 3.设置消息长度
+                msgLength = 1 + textStringBytes.length;
+                break;
+            case SET_EVENT:
+                /* 事件设置 */
+                System.out.println("## 0x8301 - 事件设置");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-类型(eventType:int)
+                 *   2-总数(eventTotal:int)
+                 *   3-事件 IDs(eventIds:int[])
+                 *   4-事件内容s(eventContents:[])
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x83);
+                byteList.set(1, (byte) 0x01);
+
+                // 2.消息体
+                // 2.1 类型
+                int eventType = (int) args[1];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(eventType));
+                // 2.2 总数
+                int eventTotal = (int) args[2];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(eventTotal));
+                // 2.3 事件项列表
+                int[] eventIds = (int[]) args[3];
+                String[] eventContents = (String[]) args[4];
+                byte[] eventContentBytes;
+                int eventMsgLength = 2;
+                for (int i = 0; i < eventTotal; i++) {
+                    // 2.3.1 事件 ID
+                    byteList.add(JTT808DataPackUtil.getIntegerByte(eventIds[i]));
+                    // 2.3.2 事件内容长度
+                    eventContentBytes = JTT808DataPackUtil.getStringBytes(eventContents[i]);
+                    byteList.add(JTT808DataPackUtil.getIntegerByte(eventContentBytes.length));
+                    // 2.3.3 事件内容
+                    for (int j = 0; j < eventContentBytes.length; j++) {
+                        byteList.add(eventContentBytes[j]);
+                    }
+                    // 计算长度
+                    eventMsgLength += 2;
+                    eventMsgLength += eventContentBytes.length;
+                }
+
+                // 3.设置消息长度
+                msgLength = eventMsgLength;
+                break;
 //            case 0x8302:
 //                /* 提问下发 */
 //                System.out.println("## 0x8302 - 提问下发");

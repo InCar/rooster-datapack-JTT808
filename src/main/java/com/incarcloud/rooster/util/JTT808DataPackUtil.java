@@ -133,6 +133,20 @@ public class JTT808DataPackUtil extends DataPackUtil {
     }
 
     /**
+     * 获得字符串的字节码信息(GBK)
+     *
+     * @param string 字符串
+     * @return
+     */
+    public static byte[] getStringBytes(String string) throws UnsupportedEncodingException {
+        byte[] returnBytes = null;
+        if(null != string && 0 < string.length()) {
+            return string.getBytes(DEFAULT_CHARSET_GBK);
+        }
+        return returnBytes;
+    }
+
+    /**
      * 获得WORD的字节码列表信息(2个字节)
      *
      * @param integer 数值

@@ -15,7 +15,7 @@ import org.junit.Test;
 public class CommandFactoryJTT808Test {
 
     @Test
-    public void testCreateCommand() {
+    public void testCreateCommand() throws Exception {
         // 初始化
         Object[] args;
         ByteBuf commandBuffer;
@@ -59,8 +59,16 @@ public class CommandFactoryJTT808Test {
         commandBuffer = commandFactory.createCommand(CommandType.TRACKING_POSITION, args);*/
 
         // 0x8203 - 人工确认报警消息
-        args = new Object[] {"013300312707", 1, 1};
-        commandBuffer = commandFactory.createCommand(CommandType.CONFIRM_ALARM, args);
+        /*args = new Object[] {"013300312707", 1, 1};
+        commandBuffer = commandFactory.createCommand(CommandType.CONFIRM_ALARM, args);*/
+
+        // 0x8300 - 文本信息下发
+        /*args = new Object[] {"013300312707", 1, "Hello Driver!"};
+        commandBuffer = commandFactory.createCommand(CommandType.SEND_TEXT, args);*/
+
+        // 0x8301 - 事件设置
+        args = new Object[] {"013300312707", 1, 2, new int[]{1, 2}, new String[]{"aa", "bb"}};
+        commandBuffer = commandFactory.createCommand(CommandType.SET_EVENT, args);
 
         // 打印数据包，并释放buffer
         System.out.println(ByteBufUtil.hexDump(commandBuffer).toUpperCase());
