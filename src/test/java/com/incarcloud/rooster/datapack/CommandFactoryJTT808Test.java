@@ -31,8 +31,16 @@ public class CommandFactoryJTT808Test {
         commandBuffer = commandFactory.createCommand(CommandType.SET_PARAMS, args);*/
 
         // 0x8104 - 查询终端参数
-        args = new Object[] {"013300312707"};
-        commandBuffer = commandFactory.createCommand(CommandType.QUERY_PARAMS, args);
+        /*args = new Object[] {"013300312707"};
+        commandBuffer = commandFactory.createCommand(CommandType.QUERY_ALL_PARAMS, args);*/
+
+        // 0x8105 - 终端控制
+        /*args = new Object[] {"013300312707", 3, ""};
+        commandBuffer = commandFactory.createCommand(CommandType.TERMINAL_CONTROL, args);*/
+
+        // 0x8106 - 查询指定终端参数
+        args = new Object[] {"013300312707", 3, new int[]{1, 2, 3}};
+        commandBuffer = commandFactory.createCommand(CommandType.QUERY_CUSTOM_PARAMS, args);
 
         // 打印数据包，并释放buffer
         System.out.println(ByteBufUtil.hexDump(commandBuffer).toUpperCase());

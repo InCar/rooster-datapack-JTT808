@@ -119,7 +119,7 @@ public class JTT808DataPackUtil extends DataPackUtil {
     public static String readString(ByteBuf buffer, int length) throws UnsupportedEncodingException {
         byte[] stringBytes = new byte[length];
         buffer.readBytes(stringBytes);
-        return new String(stringBytes, "GBK");
+        return new String(stringBytes, DEFAULT_CHARSET_GBK);
     }
 
     /**

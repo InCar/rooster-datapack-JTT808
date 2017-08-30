@@ -73,8 +73,8 @@ public class CommandFactoryJTT808 implements CommandFactory {
                 /**
                  * 参数说明：
                  *   0-设置终端手机号(deviceId:String)
-                 *   1-原始消息流水号(msgSeq:Integer)
-                 *   2-重传包总数(msgTotal:Integer)
+                 *   1-原始消息流水号(msgSeq:int)
+                 *   2-重传包总数(msgTotal:int)
                  *   3-重传包 ID 列表(msgIds:int[])
                  */
                 // 1.设置消息ID
@@ -110,7 +110,7 @@ public class CommandFactoryJTT808 implements CommandFactory {
                 /**
                  * 参数说明：
                  *   0-设置终端手机号(deviceId:String)
-                 *   1-参数总数(paramTotal:Integer)
+                 *   1-参数总数(paramTotal:int)
                  *   2-参数项列表(paramListBytes: byte[]，按照表 11 终端参数项数据格式传入字节数组)
                  */
                 // 1.设置消息ID
@@ -130,7 +130,7 @@ public class CommandFactoryJTT808 implements CommandFactory {
                 // 3.设置消息长度
                 msgLength = 1 + paramListBytes.length;
                 break;
-            case QUERY_PARAMS:
+            case QUERY_ALL_PARAMS:
                 /* 查询终端参数 */
                 System.out.println("## 0x8104 - 查询终端参数");
                 /**
@@ -146,14 +146,59 @@ public class CommandFactoryJTT808 implements CommandFactory {
                 // 3.设置消息长度
                 msgLength = 0;
                 break;
-//            case 0x8105:
-//                /* 终端控制 */
-//                System.out.println("## 0x8105 - 终端控制");
-//                break;
-//            case 0x8106:
-//                /* 查询指定终端参数 */
-//                System.out.println("## 0x8106 - 查询指定终端参数");
-//                break;
+            case TERMINAL_CONTROL:
+                /* 终端控制 */
+                System.out.println("## 0x8105 - 终端控制");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-命令字(commandId:int)
+                 *   2-命令参数(commandArgs:String)
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x81);
+                byteList.set(1, (byte) 0x05);
+
+                // 2.消息体
+                // 2.1 命令字
+                int commandId = (int) args[1];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(commandId));
+                // 2.2 命令参数
+                String commandArgs = (String) args[2];
+                if(null != commandArgs && 0 < commandArgs.length()) {
+                    byte[] commandArgsBytes = commandArgs.getBytes();
+                    for (int i = 0; i < commandArgsBytes.length; i++) {
+                        byteList.add(commandArgsBytes[i]);
+                    }
+                }
+
+                // 3.设置消息长度
+                msgLength = 1 + commandArgs.length();
+                break;
+            case QUERY_CUSTOM_PARAMS:
+                /* 查询指定终端参数 */
+                System.out.println("## 0x8106 - 查询指定终端参数");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x81);
+                byteList.set(1, (byte) 0x06);
+
+                // 2.消息体
+                // 2.1 参数总数
+                paramTotal = (int) args[1];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(paramTotal));
+                // 2.2 参数 ID 列表
+                int[] params = (int[]) args[2];
+                for (int i = 0; i < params.length; i++) {
+                    byteList.addAll(JTT808DataPackUtil.getDWordByteList(params[i]));
+                }
+
+                // 3.设置消息长度
+                msgLength = 1 + (4 * paramTotal);
+                break;
 //            case 0x8107:
 //                /* 查询终端属性 */
 //                System.out.println("## 0x8107 - 查询终端属性");
