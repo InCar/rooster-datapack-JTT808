@@ -928,10 +928,22 @@ public class CommandFactoryJTT808 implements CommandFactory {
 //                 */
 //                System.out.println("## 0x8701 - 行驶记录仪参数下传命令");
 //                break;
-//            case 0x8702:
-//                /* 上报驾驶员身份信息请求 */
-//                System.out.println("## 0x8702 - 上报驾驶员身份信息请求");
-//                break;
+            case SEND_DRIVER_ID:
+                /* 上报驾驶员身份信息请求 */
+                System.out.println("## 0x8702 - 上报驾驶员身份信息请求");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x87);
+                byteList.set(1, (byte) 0x02);
+
+                // 2.消息体(空)
+
+                // 3.设置消息长度
+                msgLength = 0;
+                break;
 //            case 0x8800:
 //                /**
 //                 * 多媒体数据上传应答<br>
@@ -939,34 +951,241 @@ public class CommandFactoryJTT808 implements CommandFactory {
 //                 */
 //                System.out.println("## 0x8800 - 多媒体数据上传应答");
 //                break;
-//            case 0x8801:
-//                /* 摄像头立即拍摄命令 */
-//                System.out.println("## 0x8801 - 摄像头立即拍摄命令");
-//                break;
-//            case 0x8802:
-//                /* 存储多媒体数据检索 */
-//                System.out.println("## 0x0802 - 存储多媒体数据检索");
-//                break;
-//            case 0x8803:
-//                /* 存储多媒体数据上传 */
-//                System.out.println("## 0x8803 - 存储多媒体数据上传");
-//                break;
-//            case 0x8804:
-//                /* 录音开始命令 */
-//                System.out.println("## 0x8804 - 录音开始命令");
-//                break;
-//            case 0x8805:
-//                /* 单条存储多媒体数据检索上传命令 */
-//                System.out.println("## 0x8805 - 单条存储多媒体数据检索上传命令");
-//                break;
+            case TAKE_PHOTO:
+                /* 摄像头立即拍摄命令 */
+                System.out.println("## 0x8801 - 摄像头立即拍摄命令");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-通道 ID(photoChannelId:int)
+                 *   2-拍摄命令(photoCommand:int)
+                 *   3-拍照间隔/录像时间(photoTimeSeconds:int)
+                 *   4-保存标志(photoSaveFlag:int)
+                 *   5-分辨率(photoRP:int)
+                 *   6-图像/视频质量(photoQuality:int)
+                 *   7-亮度(photoBrightness:int)
+                 *   8-对比度(photoContrast:int)
+                 *   9-饱和度(photoSaturation:int)
+                 *   10-色度(photoChroma:int)
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x88);
+                byteList.set(1, (byte) 0x01);
+
+                // 2.消息体
+                // 2.1 通道 ID
+                int photoChannelId = (int) args[1];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(photoChannelId));
+                // 2.2 拍摄命令：0 表示停止拍摄；0xFFFF 表示录像；其它表示拍照张数
+                int photoCommand = (int) args[2];
+                byteList.addAll(JTT808DataPackUtil.getWordByteList(photoCommand));
+                // 2.3 拍照间隔/录像时间
+                int photoTimeSeconds = (int) args[3];
+                byteList.addAll(JTT808DataPackUtil.getWordByteList(photoTimeSeconds));
+                // 2.4 保存标志：1：保存；0：实时上传
+                int photoSaveFlag = (int) args[4];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(photoSaveFlag));
+                // 2.5 分辨率
+                int photoRP = (int) args[5];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(photoRP));
+                // 2.6 图像/视频质量
+                int photoQuality = (int) args[6];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(photoQuality));
+                // 2.7 亮度
+                int photoBrightness = (int) args[7];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(photoBrightness));
+                // 2.8 对比度
+                int photoContrast = (int) args[8];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(photoContrast));
+                // 2.9 饱和度
+                int photoSaturation = (int) args[9];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(photoSaturation));
+                // 2.10 色度
+                int photoChroma = (int) args[10];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(photoChroma));
+
+                // 3.设置消息长度
+                msgLength = 12;
+                break;
+            case QUERY_MEDIA:
+                /* 存储多媒体数据检索 */
+                System.out.println("## 0x0802 - 存储多媒体数据检索");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-多媒体类型(mediaType:int)
+                 *   2-通道 ID(mediaChannelId:int)
+                 *   3-事件项编码(eventCode:int)
+                 *   4-起始时间(beginTime:Date)
+                 *   5-结束时间(endTime:Date)
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x08);
+                byteList.set(1, (byte) 0x02);
+
+                // 2.消息体
+                // 2.1 多媒体类型
+                int mediaType = (int) args[1];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(mediaType));
+                // 2.2 通道 ID
+                int mediaChannelId = (int) args[2];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(mediaChannelId));
+                // 2.3 事件项编码
+                int eventCode = (int ) args[3];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(eventCode));
+                // 2.4 起始时间
+                beginTime = (Date) args[4];
+                dateFormat = new SimpleDateFormat("yyMMddHHmmss");
+                timeBytes = JTT808DataPackUtil.getStringBytes(dateFormat.format(beginTime));
+                for (int i = 0; i < timeBytes.length; i++) {
+                    byteList.add(timeBytes[i]);
+                }
+                // 2.5 结束时间
+                endTime = (Date) args[5];
+                timeBytes = JTT808DataPackUtil.getStringBytes(dateFormat.format(endTime));
+                for (int i = 0; i < timeBytes.length; i++) {
+                    byteList.add(timeBytes[i]);
+                }
+
+                // 3.设置消息长度
+                msgLength = 15;
+                break;
+            case UPDATE_MEDIA:
+                /* 存储多媒体数据上传 */
+                System.out.println("## 0x8803 - 存储多媒体数据上传");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-多媒体类型(mediaType:int)
+                 *   2-通道 ID(mediaChannelId:int)
+                 *   3-事件项编码(eventCode:int)
+                 *   4-起始时间(beginTime:Date)
+                 *   5-结束时间(endTime:Date)
+                 *   6-删除标志(deleteFlag:int)
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x88);
+                byteList.set(1, (byte) 0x03);
+
+                // 2.消息体
+                // 2.1 多媒体类型
+                mediaType = (int) args[1];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(mediaType));
+                // 2.2 通道 ID
+                mediaChannelId = (int) args[2];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(mediaChannelId));
+                // 2.3 事件项编码
+                eventCode = (int ) args[3];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(eventCode));
+                // 2.4 起始时间
+                beginTime = (Date) args[4];
+                dateFormat = new SimpleDateFormat("yyMMddHHmmss");
+                timeBytes = JTT808DataPackUtil.getStringBytes(dateFormat.format(beginTime));
+                for (int i = 0; i < timeBytes.length; i++) {
+                    byteList.add(timeBytes[i]);
+                }
+                // 2.5 结束时间
+                endTime = (Date) args[5];
+                timeBytes = JTT808DataPackUtil.getStringBytes(dateFormat.format(endTime));
+                for (int i = 0; i < timeBytes.length; i++) {
+                    byteList.add(timeBytes[i]);
+                }
+                // 2.6 删除标志
+                int deteteFlag = (int) args[6];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(deteteFlag));
+
+                // 3.设置消息长度
+                msgLength = 16;
+                break;
+            case SOUND_RECORDING:
+                /* 录音开始命令 */
+                System.out.println("## 0x8804 - 录音开始命令");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-录音命令(recordCommand:int)
+                 *   2-录音时间(recordSeconds:int)
+                 *   3-保存标志(recordSaveFlag:int)
+                 *   4-音频采样率(recordRate:int)
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x88);
+                byteList.set(1, (byte) 0x04);
+
+                // 2.消息体
+                // 2.1 录音命令
+                int recordCommand = (int) args[1];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(recordCommand));
+                // 2.2 录音时间
+                int recordSeconds = (int) args[2];
+                byteList.addAll(JTT808DataPackUtil.getWordByteList(recordSeconds));
+                // 2.3 保存标志
+                int recordSaveFlag = (int) args[3];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(recordSaveFlag));
+                // 2.4 音频采样率
+                int recordRate = (int) args[4];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(recordRate));
+
+                // 3.设置消息长度
+                msgLength = 5;
+                break;
+            case UPDATE_SINGLE_MEDIA:
+                /* 单条存储多媒体数据检索上传命令 */
+                System.out.println("## 0x8805 - 单条存储多媒体数据检索上传命令");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-多媒体 ID(mediaId:int)
+                 *   2-删除标志(deleteFlag:int)
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x88);
+                byteList.set(1, (byte) 0x05);
+
+                // 2.消息体
+                // 2.1 多媒体 ID
+                int mediaId = (int) args[1];
+                byteList.addAll(JTT808DataPackUtil.getWordByteList(mediaId));
+                // 2.2 删除标志
+                int deleteFlag = (int) args[2];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(deleteFlag));
+
+                // 3.设置消息长度
+                msgLength = 3;
+                break;
 //            case 0x8900:
-//                /* 数据下行透传 */
+//                /**
+//                 * 数据下行透传<br>
+//                 * 透传消息内容不明确，暂时不予实现
+//                 */
 //                System.out.println("## 0x8900 - 数据下行透传");
 //                break;
-//            case 0x8A00:
-//                /* 平台 RSA 公钥 */
-//                System.out.println("## 0x8A00 - 平台 RSA 公钥");
-//                break;
+            case RSA:
+                /* 平台 RSA 公钥 */
+                System.out.println("## 0x8A00 - 平台 RSA 公钥");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-平台 RSA 公钥{e,n}中的 e(rsaE:int)
+                 *   2-RSA 公钥{e,n}中的 n(rsaN:byte[128])
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x8A);
+                byteList.set(1, (byte) 0x00);
+
+                // 2.消息体
+                // 2.1 平台 RSA 公钥{e,n}中的 e
+                int rsaE = (int) args[1];
+                byteList.addAll(JTT808DataPackUtil.getDWordByteList(rsaE));
+                // 2.2 RSA 公钥{e,n}中的 n
+                byte[] rsaN = (byte[]) args[2];
+                for (int i = 0; i < rsaN.length; i++) {
+                    byteList.add(rsaN[i]);
+                }
+
+                // 3.设置消息长度
+                msgLength = 4 + rsaN.length;
+                break;
         }
         /*====================end---判断msgId回复消息---end====================*/
         // 设置长度信息

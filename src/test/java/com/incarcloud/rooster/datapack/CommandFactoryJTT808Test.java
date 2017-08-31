@@ -123,9 +123,36 @@ public class CommandFactoryJTT808Test {
         commandBuffer = commandFactory.createCommand(CommandType.SET_LINE, args);*/
 
         // 0x8607 - 删除路线
-        args = new Object[] {"013300312707", 2, new int[]{1, 2}};
-        commandBuffer = commandFactory.createCommand(CommandType.DELETE_LINE, args);
+        /*args = new Object[] {"013300312707", 2, new int[]{1, 2}};
+        commandBuffer = commandFactory.createCommand(CommandType.DELETE_LINE, args);*/
 
+        // 0x8702 - 上报驾驶员身份信息请求
+        /*args = new Object[] {"013300312707"};
+        commandBuffer = commandFactory.createCommand(CommandType.SEND_DRIVER_ID, args);*/
+
+        // 0x8801 - 摄像头立即拍摄命令
+        /*args = new Object[] {"013300312707", 1, 1, 0, 0, 4, 8, 128, 64, 64, 128};
+        commandBuffer = commandFactory.createCommand(CommandType.TAKE_PHOTO, args);*/
+
+        // 0x0802 - 存储多媒体数据检索
+        /*args = new Object[] {"013300312707", 0, 0, 0, new Date(), new Date()};
+        commandBuffer = commandFactory.createCommand(CommandType.QUERY_MEDIA, args);*/
+
+        // 0x8803 - 存储多媒体数据上传
+        /*args = new Object[] {"013300312707", 0, 0, 0, new Date(), new Date(), 1};
+        commandBuffer = commandFactory.createCommand(CommandType.UPDATE_MEDIA, args);*/
+
+        // 0x8804 - 录音开始命令
+        /*args = new Object[] {"013300312707", 1, 10, 0, 1};
+        commandBuffer = commandFactory.createCommand(CommandType.SOUND_RECORDING, args);*/
+
+        // 0x8805 - 单条存储多媒体数据检索上传命令
+        /*args = new Object[] {"013300312707", 1, 1};
+        commandBuffer = commandFactory.createCommand(CommandType.UPDATE_SINGLE_MEDIA, args);*/
+
+        // 0x8A00 - 平台 RSA 公钥
+        args = new Object[] {"013300312707", 1, new byte[128]};
+        commandBuffer = commandFactory.createCommand(CommandType.RSA, args);
 
         // 打印数据包，并释放buffer
         System.out.println(ByteBufUtil.hexDump(commandBuffer).toUpperCase());
