@@ -75,8 +75,20 @@ public class CommandFactoryJTT808Test {
         commandBuffer = commandFactory.createCommand(CommandType.QUIZ, args);*/
 
         // 0x8303 - 信息点播菜单设置
-        args = new Object[] {"013300312707", 1, 2, new int[]{1, 2}, new String[]{"天气", "新闻"}};
-        commandBuffer = commandFactory.createCommand(CommandType.SET_INFO_DEMAND_MENU, args);
+        /*args = new Object[] {"013300312707", 1, 2, new int[]{1, 2}, new String[]{"天气", "新闻"}};
+        commandBuffer = commandFactory.createCommand(CommandType.SET_INFO_DEMAND_MENU, args);*/
+
+        // 0x8304 - 信息服务
+        /*args = new Object[] {"013300312707", 1, "吸烟有害健康"};
+        commandBuffer = commandFactory.createCommand(CommandType.INFO_SERVICE, args);*/
+
+        // 0x8400 - 电话回拨
+        /*args = new Object[] {"013300312707", 1, "16688889999"};
+        commandBuffer = commandFactory.createCommand(CommandType.PHONE_DIAL, args);*/
+
+        // 0x8401 - 设置电话本
+        args = new Object[] {"013300312707", 1, 2, new int[]{2,3}, new String[]{"110", "119"}, new String[]{"报警", "消防"}};
+        commandBuffer = commandFactory.createCommand(CommandType.SET_PHONE_LIST, args);
 
         // 打印数据包，并释放buffer
         System.out.println(ByteBufUtil.hexDump(commandBuffer).toUpperCase());

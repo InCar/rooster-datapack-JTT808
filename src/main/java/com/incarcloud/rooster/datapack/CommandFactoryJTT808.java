@@ -493,18 +493,118 @@ public class CommandFactoryJTT808 implements CommandFactory {
                 // 3.设置消息长度
                 msgLength = infoListLength;
                 break;
-//            case 0x8304:
-//                /* 信息服务 */
-//                System.out.println("## 0x8304 - 信息服务");
-//                break;
-//            case 0x8400:
-//                /* 电话回拨 */
-//                System.out.println("## 0x8400 - 电话回拨");
-//                break;
-//            case 0x8401:
-//                /* 设置电话本 */
-//                System.out.println("## 0x8401 - 设置电话本");
-//                break;
+            case INFO_SERVICE:
+                /* 信息服务 */
+                System.out.println("## 0x8304 - 信息服务");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-信息类型(infoType:int)
+                 *   2-信息内容(infoContent:String)
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x83);
+                byteList.set(1, (byte) 0x04);
+
+                // 2.消息体
+                // 2.1 信息类型
+                int infoType = (int) args[1];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(infoType));
+                // 2.2 信息长度
+                String infoContent = (String) args[2];
+                byte[] infoContentBytes = JTT808DataPackUtil.getStringBytes(infoContent);
+                byteList.addAll(JTT808DataPackUtil.getWordByteList(infoContentBytes.length));
+                // 2.3 信息内容
+                for (int i = 0; i < infoContentBytes.length; i++) {
+                    byteList.add(infoContentBytes[i]);
+                }
+
+                // 3.设置消息长度
+                msgLength = 3 + infoContentBytes.length;
+                break;
+            case PHONE_DIAL:
+                /* 电话回拨 */
+                System.out.println("## 0x8400 - 电话回拨");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-标志(phoneFlag:int)
+                 *   2-电话号码(phoneNumber:String)
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x84);
+                byteList.set(1, (byte) 0x00);
+
+                // 2.消息体
+                // 2.1 标志
+                int phoneFlag = (int) args[1];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(phoneFlag));
+                // 2.2 电话号码
+                String phoneNumber = (String) args[2];
+                byte[] phoneNumberBytes = phoneNumber.getBytes();
+                for (int i = 0; i < phoneNumberBytes.length; i++) {
+                    byteList.add(phoneNumberBytes[i]);
+                }
+
+                // 3.设置消息长度
+                msgLength = 1 + phoneNumberBytes.length;
+                break;
+            case SET_PHONE_LIST:
+                /* 设置电话本 */
+                System.out.println("## 0x8401 - 设置电话本");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-设置类型(setType:int)
+                 *   2-联系人总数(phoneTotal:int)
+                 *   3-标志s(phoneFlags:int[])
+                 *   4-电话号码s(phoneNumbers:String[])
+                 *   5-联系人s(phoneNames:String[])
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x84);
+                byteList.set(1, (byte) 0x01);
+
+                // 2.消息体
+                // 2.1 设置类型
+                setType = (int) args[1];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(setType));
+                // 2.2 联系人总数
+                int phoneTotal = (int) args[2];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(phoneTotal));
+                // 2.3 联系人项
+                int phoneListLength = 2;
+                int[] phoneFlags = (int[]) args[3];
+                String[] phoneNumbers = (String[]) args[4];
+                //byte[] phoneNumberBytes;
+                String[] phoneNames = (String[]) args[5];
+                byte[] phoneNameBytes;
+                for (int i = 0; i < phoneTotal; i++) {
+                    // 2.3.1 标志：1：呼入；2：呼出；3：呼入/呼出
+                    byteList.add(JTT808DataPackUtil.getIntegerByte(phoneFlags[i]));
+                    // 2.3.2 号码长度
+                    phoneNumberBytes = phoneNumbers[i].getBytes();
+                    byteList.add(JTT808DataPackUtil.getIntegerByte(phoneNumberBytes.length));
+                    // 2.3.3 电话号码
+                    for (int j = 0; j < phoneNumberBytes.length; j++) {
+                        byteList.add(phoneNumberBytes[j]);
+                    }
+                    // 2.3.4 联系人长度
+                    phoneNameBytes = JTT808DataPackUtil.getStringBytes(phoneNames[i]);
+                    byteList.add(JTT808DataPackUtil.getIntegerByte(phoneNameBytes.length));
+                    // 2.3.5 联系人
+                    for (int j = 0; j < phoneNameBytes.length; j++) {
+                        byteList.add(phoneNameBytes[j]);
+                    }
+                    // 计算长度
+                    phoneListLength += 3;
+                    phoneListLength += phoneNumberBytes.length;
+                    phoneListLength += phoneNameBytes.length;
+                }
+
+                // 3.设置消息长度
+                msgLength = phoneListLength;
+                break;
 //            case 0x8500:
 //                /* 车辆控制 */
 //                System.out.println("## 0x8500 - 车辆控制");
