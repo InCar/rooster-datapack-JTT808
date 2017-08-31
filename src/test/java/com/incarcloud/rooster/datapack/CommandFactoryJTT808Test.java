@@ -1,5 +1,6 @@
 package com.incarcloud.rooster.datapack;
 
+import com.incarcloud.rooster.gather.cmd.CommandFactory;
 import com.incarcloud.rooster.gather.cmd.CommandType;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
