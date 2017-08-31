@@ -781,11 +781,22 @@ public class CommandFactoryJTT808 implements CommandFactory {
                     byteList.add(timeBytes[i]);
                 }
                 // 2.5 最高速度
+                int subMsgLength = 0;
                 int maxSpeed = (int) args[5];
-                byteList.addAll(JTT808DataPackUtil.getWordByteList(maxSpeed));
+                if(1 == ((areaPros >> 1) & 0x01)) {
+                    // 若区域属性 1 位为 0 则没有该字段
+                    byteList.addAll(JTT808DataPackUtil.getWordByteList(maxSpeed));
+                } else {
+                    subMsgLength += 2;
+                }
                 // 2.6 超速持续时间
                 int maxSpeedSeconds = (int) args[6];
-                byteList.add(JTT808DataPackUtil.getIntegerByte(maxSpeedSeconds));
+                if(1 == ((areaPros >> 1) & 0x01)) {
+                    // 若区域属性 1 位为 0 则没有该字段
+                    byteList.add(JTT808DataPackUtil.getIntegerByte(maxSpeedSeconds));
+                } else {
+                    subMsgLength += 1;
+                }
                 // 2.7 区域总顶点数
                 int pointTotal = (int) args[7];
                 byteList.addAll(JTT808DataPackUtil.getWordByteList(pointTotal));
@@ -831,10 +842,77 @@ public class CommandFactoryJTT808 implements CommandFactory {
             case SET_LINE:
                 /* 设置路线 */
                 System.out.println("## 0x8606 - 设置路线");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-路线 ID(lineId:int)
+                 *   2-路线属性(lineProps:int)
+                 *   3-起始时间(beginTime:Date)
+                 *   4-结束时间(endTime:Date)
+                 *   5-路线总拐点数(pointTotal)
+                 *   6-拐点项(pointBytes:byte[])
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x86);
+                byteList.set(1, (byte) 0x06);
+
+                // 2.消息体
+                // 2.1 路线 ID
+                int lineId = (int) args[1];
+                byteList.addAll(JTT808DataPackUtil.getDWordByteList(lineId));
+                // 2.2 路线属性
+                int lineProps = (int) args[2];
+                byteList.addAll(JTT808DataPackUtil.getWordByteList(lineProps));
+                // 2.3 起始时间
+                beginTime = (Date) args[3];
+                dateFormat = new SimpleDateFormat("yyMMddHHmmss");
+                timeBytes = JTT808DataPackUtil.getStringBytes(dateFormat.format(beginTime));
+                for (int i = 0; i < timeBytes.length; i++) {
+                    byteList.add(timeBytes[i]);
+                }
+                // 2.4 结束时间
+                endTime = (Date) args[4];
+                timeBytes = JTT808DataPackUtil.getStringBytes(dateFormat.format(endTime));
+                for (int i = 0; i < timeBytes.length; i++) {
+                    byteList.add(timeBytes[i]);
+                }
+                // 2.5 路线总拐点数
+                pointTotal = (int) args[5];
+                byteList.addAll(JTT808DataPackUtil.getWordByteList(pointTotal));
+                // 2.6 拐点项
+                byte[] pointBytes = (byte[]) args[6];
+                for (int i = 0; i < pointBytes.length; i++) {
+                    byteList.add(pointBytes[i]);
+                }
+
+                // 3.设置消息长度
+                msgLength = 20 + pointBytes.length;
                 break;
             case DELETE_LINE:
                 /* 删除路线 */
                 System.out.println("## 0x8607 - 删除路线");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-路线数(lineTotal:int)
+                 *   2-路线 IDs(lineIds:int[])
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x86);
+                byteList.set(1, (byte) 0x07);
+
+                // 2.消息体
+                // 2.1 路线数
+                int lineTotal = (int) args[1];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(lineTotal));
+                // 2.2 路线 IDs
+                int[] lineIds = (int[]) args[2];
+                for (int i = 0; i < lineIds.length; i++) {
+                    byteList.addAll(JTT808DataPackUtil.getDWordByteList(lineIds[i]));
+                }
+
+                // 3.设置消息长度
+                msgLength = 1 + (4 * lineTotal);
                 break;
 //            case 0x8700:
 //                /**

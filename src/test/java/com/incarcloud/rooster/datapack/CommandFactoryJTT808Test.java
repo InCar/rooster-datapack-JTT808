@@ -115,8 +115,17 @@ public class CommandFactoryJTT808Test {
         commandBuffer = commandFactory.createCommand(CommandType.SET_AREA_POLYGON, args);*/
 
         // 0x8605 - 删除多边形区域
+        /*args = new Object[] {"013300312707", 2, new int[]{1, 2}};
+        commandBuffer = commandFactory.createCommand(CommandType.DELETE_AREA_POLYGON, args);*/
+
+        // 0x8606 - 设置路线
+        /*args = new Object[] {"013300312707", 1, 0, new Date(), new Date(), 1, new byte[]{0x00, 0x01, 0x02}};
+        commandBuffer = commandFactory.createCommand(CommandType.SET_LINE, args);*/
+
+        // 0x8607 - 删除路线
         args = new Object[] {"013300312707", 2, new int[]{1, 2}};
-        commandBuffer = commandFactory.createCommand(CommandType.DELETE_AREA_POLYGON, args);
+        commandBuffer = commandFactory.createCommand(CommandType.DELETE_LINE, args);
+
 
         // 打印数据包，并释放buffer
         System.out.println(ByteBufUtil.hexDump(commandBuffer).toUpperCase());
