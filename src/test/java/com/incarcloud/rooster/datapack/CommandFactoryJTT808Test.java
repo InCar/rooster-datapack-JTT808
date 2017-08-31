@@ -87,8 +87,36 @@ public class CommandFactoryJTT808Test {
         commandBuffer = commandFactory.createCommand(CommandType.PHONE_DIAL, args);*/
 
         // 0x8401 - 设置电话本
-        args = new Object[] {"013300312707", 1, 2, new int[]{2,3}, new String[]{"110", "119"}, new String[]{"报警", "消防"}};
-        commandBuffer = commandFactory.createCommand(CommandType.SET_PHONE_LIST, args);
+        /*args = new Object[] {"013300312707", 1, 2, new int[]{2,3}, new String[]{"110", "119"}, new String[]{"报警", "消防"}};
+        commandBuffer = commandFactory.createCommand(CommandType.SET_PHONE_LIST, args);*/
+
+        // 0x8500 - 车辆控制
+        /*args = new Object[] {"013300312707", 1};
+        commandBuffer = commandFactory.createCommand(CommandType.VEHICLE_CONTROL, args);*/
+
+        // 0x8600 - 设置圆形区域
+        /*args = new Object[] {"013300312707", 1, 1, new byte[]{0x00, 0x01, 0x02}};
+        commandBuffer = commandFactory.createCommand(CommandType.SET_AREA_CIRCULAR, args);*/
+
+        // 0x8601 - 删除圆形区域
+        /*args = new Object[] {"013300312707", 2, new int[]{1, 2}};
+        commandBuffer = commandFactory.createCommand(CommandType.DELETE_AREA_CIRCULAR, args);*/
+
+        // 0x8602 - 设置矩形区域
+        /*args = new Object[] {"013300312707", 1, 1, new byte[]{0x00, 0x01, 0x02}};
+        commandBuffer = commandFactory.createCommand(CommandType.SET_AREA_RECTANGLE, args);*/
+
+        // 0x8603 - 删除矩形区域
+        /*args = new Object[] {"013300312707", 2, new int[]{1, 2}};
+        commandBuffer = commandFactory.createCommand(CommandType.DELETE_AREA_RECTANGLE, args);*/
+
+        // 0x8604 - 设置多边形区域
+        /*args = new Object[] {"013300312707", 1, 1, new Date(), new Date(), 90, 100, 2, new double[]{100.0, 110.0}, new double[]{30.0, 33.0}};
+        commandBuffer = commandFactory.createCommand(CommandType.SET_AREA_POLYGON, args);*/
+
+        // 0x8605 - 删除多边形区域
+        args = new Object[] {"013300312707", 2, new int[]{1, 2}};
+        commandBuffer = commandFactory.createCommand(CommandType.DELETE_AREA_POLYGON, args);
 
         // 打印数据包，并释放buffer
         System.out.println(ByteBufUtil.hexDump(commandBuffer).toUpperCase());

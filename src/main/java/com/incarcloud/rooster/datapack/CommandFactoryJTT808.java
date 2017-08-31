@@ -5,7 +5,10 @@ import com.incarcloud.rooster.util.JTT808DataPackUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -605,42 +608,234 @@ public class CommandFactoryJTT808 implements CommandFactory {
                 // 3.设置消息长度
                 msgLength = phoneListLength;
                 break;
-//            case 0x8500:
-//                /* 车辆控制 */
-//                System.out.println("## 0x8500 - 车辆控制");
-//                break;
-//            case 0x8600:
-//                /* 设置圆形区域 */
-//                System.out.println("## 0x8600 - 设置圆形区域");
-//                break;
-//            case 0x8601:
-//                /* 删除圆形区域 */
-//                System.out.println("## 0x8601 - 删除圆形区域");
-//                break;
-//            case 0x8602:
-//                /* 设置矩形区域 */
-//                System.out.println("## 0x8602 - 设置矩形区域");
-//                break;
-//            case 0x8603:
-//                /* 删除矩形区域 */
-//                System.out.println("## 0x8603 - 删除矩形区域");
-//                break;
-//            case 0x8604:
-//                /* 设置多边形区域 */
-//                System.out.println("## 0x8604 - 设置多边形区域");
-//                break;
-//            case 0x8605:
-//                /* 删除多边形区域 */
-//                System.out.println("## 0x8605 - 删除多边形区域");
-//                break;
-//            case 0x8606:
-//                /* 设置路线 */
-//                System.out.println("## 0x8606 - 设置路线");
-//                break;
-//            case 0x8607:
-//                /* 删除路线 */
-//                System.out.println("## 0x8607 - 删除路线");
-//                break;
+            case VEHICLE_CONTROL:
+                /* 车辆控制 */
+                System.out.println("## 0x8500 - 车辆控制");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-控制标志(controlFlag:int)
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x85);
+                byteList.set(1, (byte) 0x00);
+
+                // 2.消息体
+                // 2.1 控制标志：0：车门解锁；1：车门加锁
+                int controlFlag = (int) args[1];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(controlFlag));
+
+                // 3.设置消息长度
+                msgLength = 1;
+                break;
+            case SET_AREA_CIRCULAR:
+                /* 设置圆形区域 */
+                System.out.println("## 0x8600 - 设置圆形区域");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-设置属性(setType:int)
+                 *   2-区域总数(areaTotal:int)
+                 *   3-区域项(areaItemBytes:byte[])
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x86);
+                byteList.set(1, (byte) 0x00);
+
+                // 2.消息体
+                // 2.1 设置属性
+                setType = (int) args[1];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(setType));
+                // 2.2 区域总数
+                int areaTotal = (int) args[2];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(areaTotal));
+                // 2.3 区域项
+                byte[] areaItemBytes = (byte[]) args[3];
+                for (int i = 0; i < areaItemBytes.length; i++) {
+                    byteList.add(areaItemBytes[i]);
+                }
+
+                // 3.设置消息长度
+                msgLength = 2 + areaItemBytes.length;
+                break;
+            case DELETE_AREA_CIRCULAR:
+                /* 删除圆形区域 */
+                System.out.println("## 0x8601 - 删除圆形区域");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-区域数(areaTotal:int)
+                 *   2-区域 IDs(areaIds:int[])
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x86);
+                byteList.set(1, (byte) 0x01);
+
+                // 2.消息体
+                // 2.1 区域数
+                areaTotal = (int) args[1];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(areaTotal));
+                // 2.2 区域 ID
+                int[] areaIds = (int[]) args[2];
+                for (int i = 0; i < areaIds.length; i++) {
+                    byteList.addAll(JTT808DataPackUtil.getDWordByteList(areaIds[i]));
+                }
+
+                // 3.设置消息长度
+                msgLength = 1 + (4 * areaTotal);
+                break;
+            case SET_AREA_RECTANGLE:
+                /* 设置矩形区域 */
+                System.out.println("## 0x8602 - 设置矩形区域");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-设置属性(setType:int)
+                 *   2-区域总数(areaTotal:int)
+                 *   3-区域项(areaItemBytes:byte[])
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x86);
+                byteList.set(1, (byte) 0x02);
+
+                // 2.消息体
+                // 2.1 设置属性
+                setType = (int) args[1];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(setType));
+                // 2.2 区域总数
+                areaTotal = (int) args[2];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(areaTotal));
+                // 2.3 区域项
+                areaItemBytes = (byte[]) args[3];
+                for (int i = 0; i < areaItemBytes.length; i++) {
+                    byteList.add(areaItemBytes[i]);
+                }
+
+                // 3.设置消息长度
+                msgLength = 2 + areaItemBytes.length;
+                break;
+            case DELETE_AREA_RECTANGLE:
+                /* 删除矩形区域 */
+                System.out.println("## 0x8603 - 删除矩形区域");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-区域数(areaTotal:int)
+                 *   2-区域 IDs(areaIds:int[])
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x86);
+                byteList.set(1, (byte) 0x03);
+
+                // 2.消息体
+                // 2.1 区域数
+                areaTotal = (int) args[1];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(areaTotal));
+                // 2.2 区域 ID
+                areaIds = (int[]) args[2];
+                for (int i = 0; i < areaIds.length; i++) {
+                    byteList.addAll(JTT808DataPackUtil.getDWordByteList(areaIds[i]));
+                }
+
+                // 3.设置消息长度
+                msgLength = 1 + (4 * areaTotal);
+                break;
+            case SET_AREA_POLYGON:
+                /* 设置多边形区域 */
+                System.out.println("## 0x8604 - 设置多边形区域");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-区域 ID(areaId:int)
+                 *   2-区域属性(areaPros:int)
+                 *   3-起始时间(beginTime:Date)
+                 *   4-结束时间(endTime:Date)
+                 *   5-最高速度(maxSpeed:int)
+                 *   6-超速持续时间(maxSpeedSeconds:int)
+                 *   7-区域总顶点数(pointTotal:int)
+                 *   8-顶点纬度s(latitudes:double[])
+                 *   9-顶点经度s(longitude:double[])
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x86);
+                byteList.set(1, (byte) 0x05);
+
+                // 2.消息体
+                // 2.1 区域 ID
+                int areaId = (int) args[1];
+                byteList.addAll(JTT808DataPackUtil.getDWordByteList(areaId));
+                // 2.2 区域属性
+                int areaPros = (int) args[2];
+                byteList.addAll(JTT808DataPackUtil.getWordByteList(areaPros));
+                // 2.3 起始时间
+                DateFormat dateFormat = new SimpleDateFormat("yyMMddHHmmss");
+                Date beginTime = (Date) args[3];
+                byte[] timeBytes = JTT808DataPackUtil.getStringBytes(dateFormat.format(beginTime));
+                for (int i = 0; i < timeBytes.length; i++) {
+                    byteList.add(timeBytes[i]);
+                }
+                // 2.4 结束时间
+                Date endTime = (Date) args[4];
+                timeBytes = JTT808DataPackUtil.getStringBytes(dateFormat.format(endTime));
+                for (int i = 0; i < timeBytes.length; i++) {
+                    byteList.add(timeBytes[i]);
+                }
+                // 2.5 最高速度
+                int maxSpeed = (int) args[5];
+                byteList.addAll(JTT808DataPackUtil.getWordByteList(maxSpeed));
+                // 2.6 超速持续时间
+                int maxSpeedSeconds = (int) args[6];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(maxSpeedSeconds));
+                // 2.7 区域总顶点数
+                int pointTotal = (int) args[7];
+                byteList.addAll(JTT808DataPackUtil.getWordByteList(pointTotal));
+                // 2.8 顶点项
+                double[] latitudes = (double[]) args[8];
+                double[] longitude = (double[]) args[9];
+                for (int i = 0; i < pointTotal; i++) {
+                    // 2.8.1 顶点纬度
+                    byteList.addAll(JTT808DataPackUtil.getDWordByteList(new Double(latitudes[i] * 10e6).intValue()));
+                    // 2.8.2 顶点经度
+                    byteList.addAll(JTT808DataPackUtil.getDWordByteList(new Double(longitude[i] * 10e6).intValue()));
+                }
+
+                // 3.设置消息长度
+                msgLength = 23 + (8 * pointTotal);
+                break;
+            case DELETE_AREA_POLYGON:
+                /* 删除多边形区域 */
+                System.out.println("## 0x8605 - 删除多边形区域");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-区域数(areaTotal:int)
+                 *   2-区域 IDs(areaIds:int[])
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x86);
+                byteList.set(1, (byte) 0x05);
+
+                // 2.消息体
+                // 2.1 区域数
+                areaTotal = (int) args[1];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(areaTotal));
+                // 2.2 区域 ID
+                areaIds = (int[]) args[2];
+                for (int i = 0; i < areaIds.length; i++) {
+                    byteList.addAll(JTT808DataPackUtil.getDWordByteList(areaIds[i]));
+                }
+
+                // 3.设置消息长度
+                msgLength = 1 + (4 * areaTotal);
+                break;
+            case SET_LINE:
+                /* 设置路线 */
+                System.out.println("## 0x8606 - 设置路线");
+                break;
+            case DELETE_LINE:
+                /* 删除路线 */
+                System.out.println("## 0x8607 - 删除路线");
+                break;
 //            case 0x8700:
 //                /**
 //                 * 行驶记录仪数据采集命令<br>
