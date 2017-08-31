@@ -398,14 +398,101 @@ public class CommandFactoryJTT808 implements CommandFactory {
                 // 3.设置消息长度
                 msgLength = eventMsgLength;
                 break;
-//            case 0x8302:
-//                /* 提问下发 */
-//                System.out.println("## 0x8302 - 提问下发");
-//                break;
-//            case 0x8303:
-//                /* 信息点播菜单设置 */
-//                System.out.println("## 0x8303 - 信息点播菜单设置");
-//                break;
+            case QUIZ:
+                /* 提问下发 */
+                System.out.println("## 0x8302 - 提问下发");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-标志(answerFlag:int)
+                 *   2-问题(quizContent:String)
+                 *   3-答案 IDs(answerIds:int[])
+                 *   4-答案内容s(answerContents:String[])
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x83);
+                byteList.set(1, (byte) 0x02);
+
+                // 2.消息体
+                // 2.1 标志
+                int answerFlag = (int) args[1];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(answerFlag));
+                // 2.2 问题内容长度
+                String quizContent = (String) args[2];
+                byte[] quizContentBytes = JTT808DataPackUtil.getStringBytes(quizContent);
+                byteList.add(JTT808DataPackUtil.getIntegerByte(quizContentBytes.length));
+                // 2.3 问题
+                for (int i = 0; i < quizContentBytes.length; i++) {
+                    byteList.add(quizContentBytes[i]);
+                }
+                // 2.4 候选答案列表
+                int answerListLength = 2 + quizContentBytes.length;
+                int[] answerIds = (int[]) args[3];
+                String[] answerContents = (String[]) args[4];
+                byte[] answerContentBytes;
+                for (int i = 0; i < answerIds.length; i++) {
+                    // 2.4.1 答案 ID
+                    byteList.add(JTT808DataPackUtil.getIntegerByte(answerIds[i]));
+                    // 2.4.2 答案内容长度
+                    answerContentBytes = JTT808DataPackUtil.getStringBytes(answerContents[i]);
+                    byteList.addAll(JTT808DataPackUtil.getWordByteList(answerContentBytes.length));
+                    // 2.4.3 答案内容
+                    for (int j = 0; j < answerContentBytes.length; j++) {
+                        byteList.add(answerContentBytes[j]);
+                    }
+                    // 计算长度
+                    answerListLength += 3;
+                    answerListLength += answerContentBytes.length;
+                }
+
+                // 3.设置消息长度
+                msgLength = answerListLength;
+                break;
+            case SET_INFO_DEMAND_MENU:
+                /* 信息点播菜单设置 */
+                System.out.println("## 0x8303 - 信息点播菜单设置");
+                /**
+                 * 参数说明：
+                 *   0-设置终端手机号(deviceId:String)
+                 *   1-设置类型(setType:int)
+                 *   2-信息项总数(infoTotal:int)
+                 *   3-信息类型s(infoTypes:int[])
+                 *   4-信息名称s(infoTitles:String[])
+                 */
+                // 1.设置消息ID
+                byteList.set(0, (byte) 0x83);
+                byteList.set(1, (byte) 0x03);
+
+                // 2.消息体
+                // 2.1 设置类型
+                int setType  = (int) args[1];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(setType));
+                // 2.2 信息项总数
+                int infoTotal = (int) args[2];
+                byteList.add(JTT808DataPackUtil.getIntegerByte(infoTotal));
+                // 2.3 信息项列表
+                int infoListLength = 2;
+                int[] infoTypes = (int[]) args[3];
+                String[] infoTitles = (String[]) args[4];
+                byte[] infoTitleBytes;
+                for (int i = 0; i < infoTotal; i++) {
+                    // 2.3.1 信息类型
+                    byteList.add(JTT808DataPackUtil.getIntegerByte(infoTypes[i]));
+                    // 2.3.2 信息名称长度
+                    infoTitleBytes = JTT808DataPackUtil.getStringBytes(infoTitles[i]);
+                    byteList.addAll(JTT808DataPackUtil.getWordByteList(infoTitleBytes.length));
+                    // 2.3.3 信息名称
+                    for (int j = 0; j < infoTitleBytes.length; j++) {
+                        byteList.add(infoTitleBytes[j]);
+                    }
+                    // 计算长度
+                    infoListLength += 3;
+                    infoListLength += infoTitleBytes.length;
+                }
+
+                // 3.设置消息长度
+                msgLength = infoListLength;
+                break;
 //            case 0x8304:
 //                /* 信息服务 */
 //                System.out.println("## 0x8304 - 信息服务");

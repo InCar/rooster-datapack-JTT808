@@ -67,8 +67,16 @@ public class CommandFactoryJTT808Test {
         commandBuffer = commandFactory.createCommand(CommandType.SEND_TEXT, args);*/
 
         // 0x8301 - 事件设置
-        args = new Object[] {"013300312707", 1, 2, new int[]{1, 2}, new String[]{"aa", "bb"}};
-        commandBuffer = commandFactory.createCommand(CommandType.SET_EVENT, args);
+        /*args = new Object[] {"013300312707", 1, 2, new int[]{1, 2}, new String[]{"aa", "bb"}};
+        commandBuffer = commandFactory.createCommand(CommandType.SET_EVENT, args);*/
+
+        // 0x8302 - 提问下发
+        /*args = new Object[] {"013300312707", 1, "你喝酒吗？", new int[]{1, 2}, new String[]{"是", "否"}};
+        commandBuffer = commandFactory.createCommand(CommandType.QUIZ, args);*/
+
+        // 0x8303 - 信息点播菜单设置
+        args = new Object[] {"013300312707", 1, 2, new int[]{1, 2}, new String[]{"天气", "新闻"}};
+        commandBuffer = commandFactory.createCommand(CommandType.SET_INFO_DEMAND_MENU, args);
 
         // 打印数据包，并释放buffer
         System.out.println(ByteBufUtil.hexDump(commandBuffer).toUpperCase());
