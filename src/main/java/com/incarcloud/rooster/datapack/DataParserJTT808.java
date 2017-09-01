@@ -387,6 +387,7 @@ public class DataParserJTT808 implements IDataParser {
                     case 1:
                         // 第 10 位为 1，表示消息体经过 RSA 算法加密
                         JTT808DataPackUtil.debug("--RSA 算法加密");
+                        dataPackObject.setEncryptName("RSA");
                 }
                 // 2.3 分包
                 int msgSubPack = (msgProps >> 13) & 0x0001;
@@ -394,17 +395,17 @@ public class DataParserJTT808 implements IDataParser {
 
                 // 3.终端手机号(设备号)
                 String deviceId = JTT808DataPackUtil.readBCD(buffer);
-                dataPackObject.setDeviceId(deviceId);
                 JTT808DataPackUtil.debug("deviceId: " + deviceId);
+                dataPackObject.setDeviceId(deviceId);
 
                 // 4.消息流水号
                 int msgSeq = JTT808DataPackUtil.readWord(buffer);
-                dataPackObject.setPackId(msgSeq);
                 JTT808DataPackUtil.debug("msgSeq: " + msgSeq);
+                dataPackObject.setPackId(msgSeq);
 
                 // 5.消息包封装项
                 int msgSubPackTotal = 0;
-                int msgSubPackSeq = 0;
+                int msgSubPackIndex = 0;
                 switch (msgSubPack) {
                     case 0:
                         // 第 13 位为 0，则消息头中无消息包封装项字段
@@ -416,9 +417,11 @@ public class DataParserJTT808 implements IDataParser {
                         // 5.1 消息总包数
                         msgSubPackTotal = JTT808DataPackUtil.readWord(buffer);
                         JTT808DataPackUtil.debug("--msgSubPackTotal: " + msgSubPackTotal);
+                        dataPackObject.setSubPackTotal(msgSubPackTotal);
                         // 5.2 包序号
-                        msgSubPackSeq = JTT808DataPackUtil.readWord(buffer);
-                        JTT808DataPackUtil.debug("--msgSubPackSeq: " + msgSubPackSeq);
+                        msgSubPackIndex = JTT808DataPackUtil.readWord(buffer);
+                        JTT808DataPackUtil.debug("--msgSubPackIndex: " + msgSubPackIndex);
+                        dataPackObject.setSubPackIndex(msgSubPackIndex);
                         break;
                 }
 
@@ -434,29 +437,40 @@ public class DataParserJTT808 implements IDataParser {
                     case 0x0002:
                         /* 终端心跳 */
                         System.out.println("## 0x0002 - 终端心跳");
-                        // 已解析，只有消息头
+                        //--心跳数据
+                        DataPackHeartbeat dataPackHeartbeat = new DataPackHeartbeat(dataPackObject);
+                        //--add
+                        dataPackTargetList.add(new DataPackTarget(dataPackHeartbeat));
                         break;
                     case 0x0100:
                         /* 终端注册 */
                         System.out.println("## 0x0100 - 终端注册");
+                        //--注册数据
+                        DataPackRegister dataPackRegister = new DataPackRegister(dataPackObject);
                         // 1.省域 ID
                         int provinceId = JTT808DataPackUtil.readWord(buffer);
                         JTT808DataPackUtil.debug("provinceId: " + provinceId);
+                        dataPackRegister.setProvinceId(provinceId);
                         // 2.市县域 ID
                         int cityId = JTT808DataPackUtil.readWord(buffer);
                         JTT808DataPackUtil.debug("cityId: " + cityId);
+                        dataPackRegister.setCityId(cityId);
                         // 3.制造商 ID
-                        String deviceManufacturerId = JTT808DataPackUtil.readByteArray(buffer, 5);
-                        JTT808DataPackUtil.debug("deviceManufacturerId: " + deviceManufacturerId);
+                        String terminalMakerId = JTT808DataPackUtil.readByteArray(buffer, 5);
+                        JTT808DataPackUtil.debug("terminalMakerId: " + terminalMakerId);
+                        dataPackRegister.setTerminalMakerId(terminalMakerId);
                         // 4.终端型号
-                        String deviceModel = JTT808DataPackUtil.readByteArray(buffer, 20);
-                        JTT808DataPackUtil.debug("deviceModel: " + deviceModel);
+                        String terminalModel = JTT808DataPackUtil.readByteArray(buffer, 20);
+                        JTT808DataPackUtil.debug("terminalModel: " + terminalModel);
+                        dataPackRegister.setTerminalModel(terminalModel);
                         // 5.终端 ID
-                        String deviceSID = JTT808DataPackUtil.readByteArray(buffer, 7);
-                        JTT808DataPackUtil.debug("deviceSID: " + deviceSID);
+                        String terminalId = JTT808DataPackUtil.readByteArray(buffer, 7);
+                        JTT808DataPackUtil.debug("terminalId: " + terminalId);
+                        dataPackRegister.setTerminalId(terminalId);
                         // 6.车牌颜色（按照 JT/T415-2006 的 5.4.12）
                         int colorId = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("colorId: " + colorId);
+                        dataPackRegister.setColorId(colorId);
                         switch (colorId) {
                             case 0:
                                 // 未上牌时，取值为 0
@@ -490,21 +504,35 @@ public class DataParserJTT808 implements IDataParser {
                         if(0 == colorId) {
                             // VIN
                             JTT808DataPackUtil.debug("vin: " + vin);
+                            dataPackRegister.setVid(vin);
                         } else  {
                             // License
                             JTT808DataPackUtil.debug("License: " + vin);
+                            dataPackRegister.setLicense(vin);
                         }
+                        //--add
+                        dataPackTargetList.add(new DataPackTarget(dataPackRegister));
                         break;
                     case 0x0003:
                         /* 终端注销 */
                         System.out.println("## 0x0003 - 终端注销");
                         // 终端注销消息体为空
+                        //--注销数据
+                        DataPackRevoke dataPackRevoke = new DataPackRevoke(dataPackObject);
+                        //--add
+                        dataPackTargetList.add(new DataPackTarget(dataPackRevoke));
                         break;
                     case 0x0102:
                         /* 终端鉴权 */
                         System.out.println("## 0x0102 - 终端鉴权");
-                        String authCodeString = JTT808DataPackUtil.readString(buffer);
-                        JTT808DataPackUtil.debug("authCodeString: " + authCodeString);
+                        //--鉴权数据
+                        DataPackAuthentication dataPackAuthentication = new DataPackAuthentication(dataPackObject);
+                        // 1.鉴权码
+                        String authCode = JTT808DataPackUtil.readString(buffer);
+                        JTT808DataPackUtil.debug("authCode: " + authCode);
+                        dataPackAuthentication.setAuthCode(authCode);
+                        //--add
+                        dataPackTargetList.add(new DataPackTarget(dataPackAuthentication));
                         break;
                     case 0x0104:
                         /* 查询终端参数应答 */
@@ -516,10 +544,13 @@ public class DataParserJTT808 implements IDataParser {
                         int paramsTotal = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("paramsTotal: " + paramsTotal);
                         // 3.参数项列表
+                        List<DataPackPeak.Peak> peakList = new ArrayList<>();
                         if(0 < paramsTotal) {
                             long paramId;
                             int paramLength;
                             byte[] paramValue;
+                            String paramValueString;
+                            DataPackPeak.Peak peak;
                             for (int i = 0; i < paramsTotal; i++) {
                                 // 3.1 参数 ID
                                 paramId = JTT808DataPackUtil.readDWord(buffer);
@@ -528,45 +559,109 @@ public class DataParserJTT808 implements IDataParser {
                                 paramLength = JTT808DataPackUtil.readByte(buffer);
                                 JTT808DataPackUtil.debug("paramLength: " + paramLength);
                                 // 3.3 参数值
-                                // TODO 详细表示待完善
                                 paramValue = JTT808DataPackUtil.readBytes(buffer, paramLength);
-                                JTT808DataPackUtil.debug("paramValue: " + DatatypeConverter.printHexBinary(paramValue));
+                                paramValueString = DatatypeConverter.printHexBinary(paramValue);
+                                JTT808DataPackUtil.debug("paramValue: " + paramValueString);
+                                // 添加数据记录
+                                peak = new DataPackPeak.Peak();
+                                peak.setPeakId(new Long(paramId).intValue());
+                                // 直接存储字节码
+                                // 这种方法不是很好，后面有空改进
+                                peak.setPeakValue(paramValueString);
+                                peak.setPeakDesc("存储二进制字符串，需要根据“表 11 终端参数项数据格式”转换数据");
+                                peakList.add(peak);
                             }
+                        }
+                        // 封装TARGET数据
+                        if(null != peakList && 0 < peakList.size()) {
+                            //--极值数据
+                            DataPackPeak dataPackPeak = new DataPackPeak(dataPackObject);
+                            dataPackPeak.setPeakList(peakList);
+                            //--add
+                            dataPackTargetList.add(new DataPackTarget(dataPackPeak));
                         }
                         break;
                     case 0x0107:
                         /* 查询终端属性应答 */
                         System.out.println("## 0x0107 - 查询终端属性应答");
-                        // 1.终端类型属性
-                        int deviceProps = JTT808DataPackUtil.readWord(buffer);
-                        JTT808DataPackUtil.debug("deviceProps: " + deviceProps);
-                        // TODO 详细表示待完善
+                        //--上报设备数据
+                        DataPackDevice dataPackDevice = new DataPackDevice(dataPackObject);
+                        // 1.终端类型
+                        int terminalType = JTT808DataPackUtil.readWord(buffer);
+                        JTT808DataPackUtil.debug("terminalType: " + terminalType);
+                        dataPackDevice.setTerminalType(terminalType);
                         // 2.制造商 ID
-                        deviceManufacturerId = JTT808DataPackUtil.readByteArray(buffer, 5);
-                        JTT808DataPackUtil.debug("deviceManufacturerId: " + deviceManufacturerId);
+                        terminalMakerId = JTT808DataPackUtil.readByteArray(buffer, 5);
+                        JTT808DataPackUtil.debug("terminalMakerId: " + terminalMakerId);
+                        dataPackDevice.setTerminalMakerId(terminalMakerId);
                         // 3.终端型号
-                        deviceModel = JTT808DataPackUtil.readByteArray(buffer, 20);
-                        JTT808DataPackUtil.debug("deviceModel: " + deviceModel);
+                        terminalModel = JTT808DataPackUtil.readByteArray(buffer, 20);
+                        JTT808DataPackUtil.debug("terminalModel: " + terminalModel);
+                        dataPackDevice.setTerminalModel(terminalModel);
                         // 4.终端 ID
-                        deviceSID = JTT808DataPackUtil.readByteArray(buffer, 7);
-                        JTT808DataPackUtil.debug("deviceSID: " + deviceSID);
+                        terminalId = JTT808DataPackUtil.readByteArray(buffer, 7);
+                        JTT808DataPackUtil.debug("terminalId: " + terminalId);
+                        dataPackDevice.setTerminalId(terminalId);
                         // 5.终端 SIM 卡 ICCID
-                        String deviceSIMICCID = JTT808DataPackUtil.readBCD(buffer, 10);
-                        JTT808DataPackUtil.debug("deviceSIMICCID: " + deviceSIMICCID);
+                        String terminalSIMICCID = JTT808DataPackUtil.readBCD(buffer, 10);
+                        JTT808DataPackUtil.debug("terminalSIMICCID: " + terminalSIMICCID);
+                        dataPackDevice.setTerminalSIMICCID(terminalSIMICCID);
                         // 6.终端硬件版本号
                         String hardwareVersion = JTT808DataPackUtil.readString(buffer, JTT808DataPackUtil.readByte(buffer));
                         JTT808DataPackUtil.debug("hardwareVersion: " + hardwareVersion);
+                        dataPackDevice.setHardwareVersion(hardwareVersion);
                         // 7.终端固件版本号
                         String firmwareVersion = JTT808DataPackUtil.readString(buffer, JTT808DataPackUtil.readByte(buffer));
                         JTT808DataPackUtil.debug("firmwareVersion: " + firmwareVersion);
+                        dataPackDevice.setFirmwareVersion(firmwareVersion);
                         // 8.GNSS 模块属性
                         int gnssProps = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("gnssProps: " + gnssProps);
-                        // TODO 详细表示待完善
+                        // 8.1 支持 GPS 定位
+                        if(1 == (gnssProps & 0x01)) {
+                            dataPackDevice.setSupportGPS(true);
+                        }
+                        // 8.2 支持北斗定位
+                        if(1 == ((gnssProps >> 1) & 0x01)) {
+                            dataPackDevice.setSupportBeidou(true);
+                        }
+                        // 8.3 支持 GLONASS 定位
+                        if(1 == ((gnssProps >> 2) & 0x01)) {
+                            dataPackDevice.setSupportGlonass(true);
+                        }
+                        // 8.4 支持 Galileo 定位
+                        if(1 == ((gnssProps >> 3) & 0x01)) {
+                            dataPackDevice.setSupportGalileo(true);
+                        }
                         // 9.通信模块属性
                         int communicationProps = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("communicationProps: " + communicationProps);
-                        // TODO 详细表示待完善
+                        // 9.1 支持GPRS通信
+                        if(1 == (communicationProps & 0x01)) {
+                            dataPackDevice.setSupportGPRS(true);
+                        }
+                        // 9.2 支持CDMA通信
+                        if(1 == ((communicationProps >> 1) & 0x01)) {
+                            dataPackDevice.setSupportCMDA(true);
+                        }
+                        // 9.3 支持TD-SCDMA通信
+                        if(1 == ((communicationProps >> 2) & 0x01)) {
+                            dataPackDevice.setSupportTDSCDMA(true);
+                        }
+                        // 9.4 支持WCDMA通信
+                        if(1 == ((communicationProps >> 3) & 0x01)) {
+                            dataPackDevice.setSupportWCDMA(true);
+                        }
+                        // 9.5 支持CDMA2000通信
+                        if(1 == ((communicationProps >> 4) & 0x01)) {
+                            dataPackDevice.setSupportCDMA2000(true);
+                        }
+                        // 9.6 支持TD-LTE通信
+                        if(1 == ((communicationProps >> 5) & 0x01)) {
+                            dataPackDevice.setSupportTDLTE(true);
+                        }
+                        //-add
+                        dataPackTargetList.add(new DataPackTarget(dataPackDevice));
                         break;
                     case 0x0108:
                         /* 终端升级结果通知 */
@@ -972,7 +1067,7 @@ public class DataParserJTT808 implements IDataParser {
                         /* 多媒体数据上传 */
                         System.out.println("## 0x0801 - 多媒体数据上传");
                         // 第1个子包
-                        if(1 == msgSubPackSeq && 0 < msgSubPackTotal) {
+                        if(1 == msgSubPackIndex && 0 < msgSubPackTotal) {
                             // 1.多媒体数据 ID
                             mediaId = JTT808DataPackUtil.readDWord(buffer);
                             JTT808DataPackUtil.debug("mediaId: " + mediaId);

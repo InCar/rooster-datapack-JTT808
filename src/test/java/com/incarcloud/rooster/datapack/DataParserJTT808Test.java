@@ -1,5 +1,6 @@
 package com.incarcloud.rooster.datapack;
 
+import com.incarcloud.rooster.util.GsonFactory;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
@@ -85,9 +86,9 @@ public class DataParserJTT808Test {
 
     @Test
     public void testExtractBody() {
-        DataPack dataPack = parser.extract(buffer).get(4);
+        DataPack dataPack = parser.extract(buffer).get(1);
         //Assert.assertNotEquals(0L, parser.extractBody(dataPack).size());
-        parser.extractBody(dataPack);
+        System.out.println(GsonFactory.newInstance().createGson().toJson(parser.extractBody(dataPack)));
     }
 
     @Test
