@@ -1227,7 +1227,7 @@ public class DataParserJTT808 implements IDataParser {
                         // 7.多媒体数据包
                         byte[] mediaBytes = JTT808DataPackUtil.readBytes(buffer, buffer.readableBytes() - 2);
                         System.out.println("mediaBytes: " + mediaBytes);
-                        dataPackMedia.setData(mediaBytes);
+                        dataPackMedia.setData(Base64.getEncoder().encodeToString(mediaBytes));
                         //--add
                         dataPackTargetList.add(new DataPackTarget(dataPackMedia));
                         break;

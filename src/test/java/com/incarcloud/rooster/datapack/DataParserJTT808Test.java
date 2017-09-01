@@ -4,13 +4,14 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.util.ReferenceCountUtil;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.imageio.stream.FileImageOutputStream;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -90,8 +91,39 @@ public class DataParserJTT808Test {
     }
 
     @Test
-    public void testExtractBodyForImage() {
+    @Ignore
+    public void testExtractBodyForJPEG() throws Exception {
+        List<DataPack> dataPackList = parser.extract(buffer);
+        if (null != dataPackList && 4 < dataPackList.size()) {
+            List<DataPackMedia> dataPackMediaList = new ArrayList<>();
+            List<DataPackTarget> dataPackTargetList = new ArrayList<>();
+            for (int i = 4; i < dataPackList.size(); i++) {
+                dataPackTargetList.addAll(parser.extractBody(dataPackList.get(i)));
+            }
+            for (DataPackTarget target : dataPackTargetList) {
+                if(target.getDataPackObject() instanceof DataPackMedia) {
+                    dataPackMediaList.add((DataPackMedia) target.getDataPackObject());
+                }
+            }
+            if(null != dataPackMediaList && 0 < dataPackMediaList.size()) {
+                ByteBuf mediaBuffer = Unpooled.buffer(1024);
+                for (DataPackMedia media: dataPackMediaList) {
+                    System.out.println(String.format("%d-%d:%d", media.getPackId(), media.getSubPackIndex(), media.getSubPackTotal()));
+                    mediaBuffer.writeBytes(Base64.getDecoder().decode(media.getData()));
+                }
 
+                File mediaFile = new File(System.getProperty("user.home") + "\\Desktop\\jtt808.jpg");
+                if(mediaFile.exists()) {
+                    mediaFile.delete();
+                }
+                FileImageOutputStream output = new FileImageOutputStream(mediaFile);
+                byte[] data = ByteBufUtil.getBytes(mediaBuffer);
+                output.write(data, 0, data.length);
+                output.close();
+
+                ReferenceCountUtil.release(mediaBuffer);
+            }
+        }
     }
 
     @Test
