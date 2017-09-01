@@ -50,7 +50,7 @@ public class DataParserJTT808 implements IDataParser {
         List<DataPack> dataPackList = new ArrayList<>();
 
         // 长度大于2M的数据包直接抛弃(恶意数据)
-        if(DISCARDS_MAX_LENGTH < buffer.readableBytes()) {
+        if (DISCARDS_MAX_LENGTH < buffer.readableBytes()) {
             //System.out.println("clear");
             buffer.clear();
         }
@@ -65,29 +65,29 @@ public class DataParserJTT808 implements IDataParser {
             offset = start + 1;
 
             // 寻找以0x7E开始和0x7E结束的数据段
-            if(0x7E == (buffer.getByte(start) & 0xFF)) {
+            if (0x7E == (buffer.getByte(start) & 0xFF)) {
                 // 寻找0x7E结束点
                 for (; offset < buffer.writerIndex(); offset++) {
-                    if(0x7E == (buffer.getByte(offset) & 0xFF)) {
+                    if (0x7E == (buffer.getByte(offset) & 0xFF)) {
                         // 寻找0x7E结束点成功，结束for循环
                         break;
                     }
                 }
 
                 // 寻找0x7E结束点失败，结束while循环
-                if(buffer.writableBytes() == offset) {
+                if (buffer.writableBytes() == offset) {
                     break;
                 }
 
                 // 转义还原字节码
                 // 还原规则：0x7D0x01->0x7D, 0x7D0x02->0x7E
                 byteList = new ArrayList<>();
-                for(int i = start + 1; i < offset - 1; i++) {
-                    if(0x7D == (buffer.getByte(i) & 0xFF) && 0x01 == (buffer.getByte(i+1) & 0xFF)) {
+                for (int i = start + 1; i < offset - 1; i++) {
+                    if (0x7D == (buffer.getByte(i) & 0xFF) && 0x01 == (buffer.getByte(i + 1) & 0xFF)) {
                         // 0x7D0x01->0x7D
                         byteList.add((byte) 0x7D);
                         i++;
-                    } else if(0x7D == (buffer.getByte(i) & 0xFF) && 0x02 == (buffer.getByte(i+1) & 0xFF)) {
+                    } else if (0x7D == (buffer.getByte(i) & 0xFF) && 0x02 == (buffer.getByte(i + 1) & 0xFF)) {
                         // 0x7D0x02->0x7E
                         byteList.add((byte) 0x7E);
                         i++;
@@ -98,13 +98,13 @@ public class DataParserJTT808 implements IDataParser {
 
                 // 计算校验码
                 check = 0x00;
-                for (Byte byteObject: byteList) {
+                for (Byte byteObject : byteList) {
                     // 校验码指从消息头开始，同后一字节异或，直到校验码前一个字节
                     check ^= byteObject.byteValue();
                 }
 
                 // 验证校验码
-                if(buffer.getByte(offset -1) == check) {
+                if (buffer.getByte(offset - 1) == check) {
                     //System.out.println("oxr check success");
                     //System.out.println(String.format("%d-%d", start, offset - start + 1));
                     // 打包
@@ -132,19 +132,19 @@ public class DataParserJTT808 implements IDataParser {
      * @return 返回转义还原的字节数组
      */
     private byte[] validate(byte[] bytes) {
-        if(null != bytes && 2 < bytes.length) {
+        if (null != bytes && 2 < bytes.length) {
             // 标识位(0x7e)
-            if(0x7E == (bytes[0] & 0xFF) && 0x7E == (bytes[bytes.length-1] & 0xFF)) {
+            if (0x7E == (bytes[0] & 0xFF) && 0x7E == (bytes[bytes.length - 1] & 0xFF)) {
                 // 转义还原字节码
                 // 还原规则：0x7D0x01->0x7D, 0x7D0x02->0x7E
                 List<Byte> byteList = new ArrayList<>();
                 byteList.add(bytes[0]); // 标识位(0x7E)
-                for(int i = 1; i < bytes.length - 1; i++) {
-                    if(0x7D == (bytes[i] & 0xFF) && 0x01 == (bytes[i+1] & 0xFF)) {
+                for (int i = 1; i < bytes.length - 1; i++) {
+                    if (0x7D == (bytes[i] & 0xFF) && 0x01 == (bytes[i + 1] & 0xFF)) {
                         // 0x7D0x01->0x7D
                         byteList.add((byte) 0x7D);
                         i++;
-                    } else if(0x7D == (bytes[i] & 0xFF) && 0x02 == (bytes[i+1] & 0xFF)) {
+                    } else if (0x7D == (bytes[i] & 0xFF) && 0x02 == (bytes[i + 1] & 0xFF)) {
                         // 0x7D0x02->0x7E
                         byteList.add((byte) 0x7E);
                         i++;
@@ -152,7 +152,7 @@ public class DataParserJTT808 implements IDataParser {
                         byteList.add(bytes[i]);
                     }
                 }
-                byteList.add(bytes[bytes.length-1]); // 标识位(0x7E)
+                byteList.add(bytes[bytes.length - 1]); // 标识位(0x7E)
 
                 // List<Byte> --> byte[]
                 byte[] shiftBytes = new byte[byteList.size()];
@@ -162,12 +162,12 @@ public class DataParserJTT808 implements IDataParser {
 
                 // 计算校验码
                 byte check = 0x00;
-                for(int i = 1; i <= shiftBytes.length - 3; i++) {
+                for (int i = 1; i <= shiftBytes.length - 3; i++) {
                     check ^= shiftBytes[i];
                 }
 
                 // 验证校验码
-                if(shiftBytes[shiftBytes.length - 2] == check) {
+                if (shiftBytes[shiftBytes.length - 2] == check) {
                     return shiftBytes;
                 }
             }
@@ -179,10 +179,10 @@ public class DataParserJTT808 implements IDataParser {
     public ByteBuf createResponse(DataPack requestPack, ERespReason reason) {
         // 发送消息时：消息封装——>计算并填充校验码——>转义
         // 0x7e-0x7d02, 0x7d-0x7d01
-        if(null != requestPack && null != reason) {
+        if (null != requestPack && null != reason) {
             // 原始数据
             byte[] dataPackBytes = validate(Base64.getDecoder().decode(requestPack.getDataB64()));
-            if(null != dataPackBytes) {
+            if (null != dataPackBytes) {
                 // 初始化List容器，装载【消息头+消息体】
                 List<Byte> byteList = new ArrayList<>();
 
@@ -303,7 +303,7 @@ public class DataParserJTT808 implements IDataParser {
 
                 // 计算并填充校验码
                 byte check = 0x00;
-                for (Byte byteObject: byteList) {
+                for (Byte byteObject : byteList) {
                     check ^= byteObject.byteValue();
                 }
                 byteList.add(check);
@@ -311,12 +311,12 @@ public class DataParserJTT808 implements IDataParser {
                 // 转义
                 List<Byte> defaultByteList = new ArrayList<>();
                 defaultByteList.add((byte) 0x7E); //标识位(0x7E)
-                for(Byte byteObject: byteList) {
-                    if(0x7D == (byteObject.byteValue() & 0xFF)) {
+                for (Byte byteObject : byteList) {
+                    if (0x7D == (byteObject.byteValue() & 0xFF)) {
                         // 0x7D->0x7D0x01
                         defaultByteList.add((byte) 0x7D);
                         defaultByteList.add((byte) 0x01);
-                    } else if(0x7E == (byteObject.byteValue() & 0xFF)) {
+                    } else if (0x7E == (byteObject.byteValue() & 0xFF)) {
                         // 0x7E->0x7D0x02
                         defaultByteList.add((byte) 0x7D);
                         defaultByteList.add((byte) 0x02);
@@ -341,7 +341,7 @@ public class DataParserJTT808 implements IDataParser {
 
     @Override
     public void destroyResponse(ByteBuf responseBuf) {
-        if(null != responseBuf) {
+        if (null != responseBuf) {
             ReferenceCountUtil.release(responseBuf);
         }
     }
@@ -351,7 +351,7 @@ public class DataParserJTT808 implements IDataParser {
         ByteBuf buffer = null;
         List<DataPackTarget> dataPackTargetList = null;
         byte[] dataPackBytes = validate(Base64.getDecoder().decode(dataPack.getDataB64()));
-        if(null != dataPackBytes) {
+        if (null != dataPackBytes) {
             // 声明变量信息
             dataPackTargetList = new ArrayList<>();
             DataPackObject dataPackObject = new DataPackObject(dataPack);
@@ -501,11 +501,11 @@ public class DataParserJTT808 implements IDataParser {
                         }
                         // 7.车辆标识
                         String vin = JTT808DataPackUtil.readString(buffer);
-                        if(0 == colorId) {
+                        if (0 == colorId) {
                             // VIN
                             JTT808DataPackUtil.debug("vin: " + vin);
                             dataPackRegister.setVid(vin);
-                        } else  {
+                        } else {
                             // License
                             JTT808DataPackUtil.debug("License: " + vin);
                             dataPackRegister.setLicense(vin);
@@ -545,7 +545,7 @@ public class DataParserJTT808 implements IDataParser {
                         JTT808DataPackUtil.debug("paramsTotal: " + paramsTotal);
                         // 3.参数项列表
                         List<DataPackPeak.Peak> peakList = new ArrayList<>();
-                        if(0 < paramsTotal) {
+                        if (0 < paramsTotal) {
                             long paramId;
                             int paramLength;
                             byte[] paramValue;
@@ -573,7 +573,7 @@ public class DataParserJTT808 implements IDataParser {
                             }
                         }
                         // 封装TARGET数据
-                        if(null != peakList && 0 < peakList.size()) {
+                        if (null != peakList && 0 < peakList.size()) {
                             //--极值数据
                             DataPackPeak dataPackPeak = new DataPackPeak(dataPackObject);
                             dataPackPeak.setPeakList(peakList);
@@ -618,46 +618,46 @@ public class DataParserJTT808 implements IDataParser {
                         int gnssProps = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("gnssProps: " + gnssProps);
                         // 8.1 支持 GPS 定位
-                        if(1 == (gnssProps & 0x01)) {
+                        if (1 == (gnssProps & 0x01)) {
                             dataPackDevice.setSupportGPS(true);
                         }
                         // 8.2 支持北斗定位
-                        if(1 == ((gnssProps >> 1) & 0x01)) {
+                        if (1 == ((gnssProps >> 1) & 0x01)) {
                             dataPackDevice.setSupportBeidou(true);
                         }
                         // 8.3 支持 GLONASS 定位
-                        if(1 == ((gnssProps >> 2) & 0x01)) {
+                        if (1 == ((gnssProps >> 2) & 0x01)) {
                             dataPackDevice.setSupportGlonass(true);
                         }
                         // 8.4 支持 Galileo 定位
-                        if(1 == ((gnssProps >> 3) & 0x01)) {
+                        if (1 == ((gnssProps >> 3) & 0x01)) {
                             dataPackDevice.setSupportGalileo(true);
                         }
                         // 9.通信模块属性
                         int communicationProps = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("communicationProps: " + communicationProps);
                         // 9.1 支持GPRS通信
-                        if(1 == (communicationProps & 0x01)) {
+                        if (1 == (communicationProps & 0x01)) {
                             dataPackDevice.setSupportGPRS(true);
                         }
                         // 9.2 支持CDMA通信
-                        if(1 == ((communicationProps >> 1) & 0x01)) {
+                        if (1 == ((communicationProps >> 1) & 0x01)) {
                             dataPackDevice.setSupportCMDA(true);
                         }
                         // 9.3 支持TD-SCDMA通信
-                        if(1 == ((communicationProps >> 2) & 0x01)) {
+                        if (1 == ((communicationProps >> 2) & 0x01)) {
                             dataPackDevice.setSupportTDSCDMA(true);
                         }
                         // 9.4 支持WCDMA通信
-                        if(1 == ((communicationProps >> 3) & 0x01)) {
+                        if (1 == ((communicationProps >> 3) & 0x01)) {
                             dataPackDevice.setSupportWCDMA(true);
                         }
                         // 9.5 支持CDMA2000通信
-                        if(1 == ((communicationProps >> 4) & 0x01)) {
+                        if (1 == ((communicationProps >> 4) & 0x01)) {
                             dataPackDevice.setSupportCDMA2000(true);
                         }
                         // 9.6 支持TD-LTE通信
-                        if(1 == ((communicationProps >> 5) & 0x01)) {
+                        if (1 == ((communicationProps >> 5) & 0x01)) {
                             dataPackDevice.setSupportTDLTE(true);
                         }
                         //-add
@@ -666,12 +666,19 @@ public class DataParserJTT808 implements IDataParser {
                     case 0x0108:
                         /* 终端升级结果通知 */
                         System.out.println("## 0x0108 - 终端升级结果通知");
+                        //--结果数据
+                        DataPackResult dataPackResult = new DataPackResult(dataPackObject);
                         // 1.升级类型：0：终端，12：道路运输证 IC 卡读卡器，52：北斗卫星定位模块
                         int upgradeType = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("upgradeType: " + upgradeType);
+                        dataPackResult.setResultType(upgradeType);
                         // 2.升级结果：0：成功，1：失败，2：取消
                         int upgradeResult = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("upgradeResult: " + upgradeResult);
+                        dataPackResult.setResultCode(upgradeResult);
+                        //-add
+                        dataPackResult.setResultName("终端升级结果");
+                        dataPackTargetList.add(new DataPackTarget(dataPackResult));
                         break;
                     case 0x0200:
                         /* 位置信息汇报 */
@@ -690,7 +697,7 @@ public class DataParserJTT808 implements IDataParser {
 
                         // 4.解析报警标志位
                         List<DataPackAlarm.Alarm> alarmList = JTT808DataPackUtil.detailAlarmProps(alarmProps);
-                        if(null != alarmList && 0 < alarmList.size()) {
+                        if (null != alarmList && 0 < alarmList.size()) {
                             dataPackAlarm = new DataPackAlarm(dataPackObject);
                             dataPackAlarm.setPosition(dataPackPosition);
                             dataPackAlarm.setAlarmList(alarmList);
@@ -720,7 +727,7 @@ public class DataParserJTT808 implements IDataParser {
 
                         // 5.解析报警标志位
                         alarmList = JTT808DataPackUtil.detailAlarmProps(alarmProps);
-                        if(null != alarmList && 0 < alarmList.size()) {
+                        if (null != alarmList && 0 < alarmList.size()) {
                             dataPackAlarm = new DataPackAlarm(dataPackObject);
                             dataPackAlarm.setPosition(dataPackPosition);
                             dataPackAlarm.setAlarmList(alarmList);
@@ -733,36 +740,64 @@ public class DataParserJTT808 implements IDataParser {
                     case 0x0301:
                         /* 事件报告 */
                         System.out.println("## 0x0301 - 事件报告");
+                        //--结果数据
+                        dataPackResult = new DataPackResult(dataPackObject);
                         // 1.事件 ID
                         int eventId = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("eventId: " + eventId);
+                        dataPackResult.setResultCode(eventId);
+                        //-add
+                        dataPackResult.setResultName("事件报告结果");
+                        dataPackTargetList.add(new DataPackTarget(dataPackResult));
                         break;
                     case 0x0302:
                         /* 提问应答 */
                         System.out.println("## 0x0302 - 提问应答");
+                        //--结果数据
+                        dataPackResult = new DataPackResult(dataPackObject);
                         // 1.应答流水号
                         responseMsgSeq = JTT808DataPackUtil.readWord(buffer);
                         JTT808DataPackUtil.debug("responseMsgSeq: " + responseMsgSeq);
+                        dataPackResult.setPackId(responseMsgSeq);
                         // 2.答案 ID
                         int answerId = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("answerId: " + answerId);
+                        dataPackResult.setResultCode(answerId);
+                        //-add
+                        dataPackResult.setResultName("提问结果");
+                        dataPackTargetList.add(new DataPackTarget(dataPackResult));
                         break;
                     case 0x0303:
                         /* 信息点播/取消 */
                         System.out.println("## 0x0303 - 信息点播/取消");
+                        //--结果数据
+                        dataPackResult = new DataPackResult(dataPackObject);
                         // 1.信息类型：0：删除终端全部信息项；1：更新菜单；2：追加菜单；3：修改菜单
                         int messageType = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("messageType: " + messageType);
+                        dataPackResult.setResultType(messageType);
                         // 2.点播/取消标志：0：取消；1：点播
                         int messageResult = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("messageResult: " + messageResult);
+                        dataPackResult.setResultCode(messageResult);
+                        //-add
+                        dataPackResult.setResultName("信息点播/取消结果");
+                        dataPackTargetList.add(new DataPackTarget(dataPackResult));
                         break;
                     case 0x0500:
                         /* 车辆控制应答 */
                         System.out.println("## 0x0500 - 车辆控制应答");
+                        //--结果数据
+                        dataPackResult = new DataPackResult(dataPackObject);
                         // 1.应答流水号
                         responseMsgSeq = JTT808DataPackUtil.readWord(buffer);
                         JTT808DataPackUtil.debug("responseMsgSeq: " + responseMsgSeq);
+                        dataPackResult.setPackId(responseMsgSeq);
+                        //-add
+                        dataPackResult.setResultName("车辆控制结果");
+                        dataPackTargetList.add(new DataPackTarget(dataPackResult));
+
+                        //--位置数据
                         // 2.报警标志位
                         alarmProps = JTT808DataPackUtil.readDWord(buffer);
                         JTT808DataPackUtil.debug("alarmProps: " + alarmProps);
@@ -776,7 +811,7 @@ public class DataParserJTT808 implements IDataParser {
 
                         // 5.解析报警标志位
                         alarmList = JTT808DataPackUtil.detailAlarmProps(alarmProps);
-                        if(null != alarmList && 0 < alarmList.size()) {
+                        if (null != alarmList && 0 < alarmList.size()) {
                             dataPackAlarm = new DataPackAlarm(dataPackObject);
                             dataPackAlarm.setPosition(dataPackPosition);
                             dataPackAlarm.setAlarmList(alarmList);
@@ -800,6 +835,8 @@ public class DataParserJTT808 implements IDataParser {
                     case 0x0702:
                         /* 驾驶员身份信息采集上报 */
                         System.out.println("## 0x0702 - 驾驶员身份信息采集上报");
+                        //--驾驶员数据
+                        DataPackDriver dataPackDriver = new DataPackDriver(dataPackObject);
                         // 1.状态
                         int driverICStatus = JTT808DataPackUtil.readByte(buffer);
                         switch (driverICStatus) {
@@ -812,9 +849,11 @@ public class DataParserJTT808 implements IDataParser {
                                 JTT808DataPackUtil.debug("--从业资格证 IC 卡拔出（驾驶员下班）");
                                 break;
                         }
+                        dataPackDriver.setDriverICStatus(driverICStatus);
                         // 2.时间
                         Date driverICTime = JTT808DataPackUtil.readDate(buffer);
                         JTT808DataPackUtil.debug("driverICTime: " + driverICTime);
+                        dataPackDriver.setDriverICTime(driverICTime);
                         // 3.IC 卡读取结果
                         int driverICResult = JTT808DataPackUtil.readByte(buffer);
                         switch (driverICResult) {
@@ -839,22 +878,29 @@ public class DataParserJTT808 implements IDataParser {
                                 JTT808DataPackUtil.debug("--读卡失败，原因为数据校验错误");
                                 break;
                         }
+                        dataPackDriver.setDriverICResult(driverICResult);
                         // 4.驾驶员姓名
                         int driverNameLength = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("driverNameLength: " + driverNameLength);
                         String driverName = JTT808DataPackUtil.readString(buffer, driverNameLength);
                         JTT808DataPackUtil.debug("driverName: " + driverName);
+                        dataPackDriver.setDriverName(driverName);
                         // 5.从业资格证编码
                         String driverCertCode = JTT808DataPackUtil.readString(buffer, 20);
                         JTT808DataPackUtil.debug("driverCertCode: " + driverCertCode);
+                        dataPackDriver.setDriverCertCode(driverCertCode);
                         // 6.发证机构名称
                         int driverCertOrganizationLength = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("driverCertOrganizationLength: " + driverCertOrganizationLength);
                         String driverCertOrganizationName = JTT808DataPackUtil.readString(buffer, driverCertOrganizationLength);
                         JTT808DataPackUtil.debug("driverCertOrganizationName: " + driverCertOrganizationName);
+                        dataPackDriver.setDriverCertOrganizationName(driverCertOrganizationName);
                         // 7.证件有效期
                         Date driverCertExpireDate = JTT808DataPackUtil.readDateOnly(buffer);
                         JTT808DataPackUtil.debug("driverCertExpireDate: " + driverCertExpireDate);
+                        dataPackDriver.setDriverCertExpireDate(driverCertExpireDate);
+                        //--add
+                        dataPackTargetList.add(new DataPackTarget(dataPackDriver));
                         break;
                     case 0x0704:
                         /* 定位数据批量上传 */
@@ -874,7 +920,7 @@ public class DataParserJTT808 implements IDataParser {
                                 break;
                         }
                         // 3.位置汇报数据项
-                        if(0 < positionTotal) {
+                        if (0 < positionTotal) {
                             int positionLength;
                             for (int i = 0; i < positionTotal; i++) {
                                 // 3.1 位置汇报数据体长度
@@ -893,7 +939,7 @@ public class DataParserJTT808 implements IDataParser {
 
                                 // 3.5 解析报警标志位
                                 alarmList = JTT808DataPackUtil.detailAlarmProps(alarmProps);
-                                if(null != alarmList && 0 < alarmList.size()) {
+                                if (null != alarmList && 0 < alarmList.size()) {
                                     dataPackAlarm = new DataPackAlarm(dataPackObject);
                                     dataPackAlarm.setPosition(dataPackPosition);
                                     dataPackAlarm.setAlarmList(alarmList);
@@ -907,7 +953,7 @@ public class DataParserJTT808 implements IDataParser {
                         }
                         break;
                     case 0x0705:
-                        /* CAN 总线数据上传 */
+                        /* CAN 总线数据上传-暂时不存 */
                         System.out.println("## 0x0705 - CAN 总线数据上传");
                         // 1.数据项个数
                         int canTotal = JTT808DataPackUtil.readWord(buffer);
@@ -916,7 +962,7 @@ public class DataParserJTT808 implements IDataParser {
                         String canReceiveTime = JTT808DataPackUtil.readBCD(buffer, 5);
                         JTT808DataPackUtil.debug("canReceiveTime: " + canReceiveTime);
                         // 3.CAN 总线数据项
-                        if(0 < canTotal) {
+                        if (0 < canTotal) {
                             long canId;
                             int canChannel;
                             int canFrameType;
@@ -976,9 +1022,12 @@ public class DataParserJTT808 implements IDataParser {
                     case 0x0800:
                         /* 多媒体事件信息上传 */
                         System.out.println("## 0x0800 - 多媒体事件信息上传");
+                        //--多媒体数据
+                        DataPackMedia dataPackMedia = new DataPackMedia(dataPackObject);
                         // 1.多媒体数据 ID
                         long mediaId = JTT808DataPackUtil.readDWord(buffer);
                         JTT808DataPackUtil.debug("mediaId: " + mediaId);
+                        dataPackMedia.setmId(mediaId);
                         // 2.多媒体类型：0：图像；1：音频；2：视频；
                         int mediaClassify = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("mediaClassify: " + mediaClassify);
@@ -996,6 +1045,7 @@ public class DataParserJTT808 implements IDataParser {
                                 JTT808DataPackUtil.debug("--视频");
                                 break;
                         }
+                        dataPackMedia.setType(mediaClassify);
                         // 3.多媒体格式编码：0：JPEG；1：TIF；2：MP3；3：WAV；4：WMV；
                         int mediaFormat = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("mediaFormat: " + mediaFormat);
@@ -1021,6 +1071,7 @@ public class DataParserJTT808 implements IDataParser {
                                 JTT808DataPackUtil.debug("--WMV");
                                 break;
                         }
+                        dataPackMedia.setFormat(mediaFormat);
                         // 4.事件项编码：0：平台下发指令；1：定时动作；2：抢劫报警触发；3：碰撞侧翻报警触发；4：门开拍照；
                         //             5：门关拍照；6：车门由开变关，时速从＜20公里到超过20公里；7：定距拍照；
                         int mediaEventCode = JTT808DataPackUtil.readByte(buffer);
@@ -1045,32 +1096,39 @@ public class DataParserJTT808 implements IDataParser {
                             case 0x04:
                                 // 4：门开拍照
                                 JTT808DataPackUtil.debug("--门开拍照");
-                            break;
+                                break;
                             case 0x05:
                                 // 5：门关拍照
                                 JTT808DataPackUtil.debug("--门关拍照");
-                            break;
+                                break;
                             case 0x06:
                                 // 6：车门由开变关，时速从＜20公里到超过20公里
                                 JTT808DataPackUtil.debug("--车门由开变关，时速从＜20公里到超过20公里");
-                            break;
+                                break;
                             case 0x07:
                                 // 7：定距拍照
                                 JTT808DataPackUtil.debug("--定距拍照");
                                 break;
                         }
+                        dataPackMedia.setEventCode(mediaEventCode);
                         // 5.通道 ID
                         int mediaChannelId = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("mediaChannelId: " + mediaChannelId);
+                        dataPackMedia.setChannelId(mediaChannelId);
+                        //--add
+                        dataPackTargetList.add(new DataPackTarget(dataPackMedia));
                         break;
                     case 0x0801:
                         /* 多媒体数据上传 */
                         System.out.println("## 0x0801 - 多媒体数据上传");
+                        //--多媒体数据
+                        dataPackMedia = new DataPackMedia(dataPackObject);
                         // 第1个子包
-                        if(1 == msgSubPackIndex && 0 < msgSubPackTotal) {
+                        if (1 == msgSubPackIndex && 0 < msgSubPackTotal) {
                             // 1.多媒体数据 ID
                             mediaId = JTT808DataPackUtil.readDWord(buffer);
                             JTT808DataPackUtil.debug("mediaId: " + mediaId);
+                            dataPackMedia.setmId(mediaId);
                             // 2.多媒体类型：0：图像；1：音频；2：视频；
                             mediaClassify = JTT808DataPackUtil.readByte(buffer);
                             JTT808DataPackUtil.debug("mediaClassify: " + mediaClassify);
@@ -1088,6 +1146,7 @@ public class DataParserJTT808 implements IDataParser {
                                     JTT808DataPackUtil.debug("--视频");
                                     break;
                             }
+                            dataPackMedia.setType(mediaClassify);
                             // 3.多媒体格式编码：0：JPEG；1：TIF；2：MP3；3：WAV；4：WMV；
                             mediaFormat = JTT808DataPackUtil.readByte(buffer);
                             JTT808DataPackUtil.debug("mediaFormat: " + mediaFormat);
@@ -1113,6 +1172,7 @@ public class DataParserJTT808 implements IDataParser {
                                     JTT808DataPackUtil.debug("--WMV");
                                     break;
                             }
+                            dataPackMedia.setFormat(mediaFormat);
                             // 4.事件项编码：0：平台下发指令；1：定时动作；2：抢劫报警触发；3：碰撞侧翻报警触发；
                             mediaEventCode = JTT808DataPackUtil.readByte(buffer);
                             JTT808DataPackUtil.debug("mediaEventCode: " + mediaEventCode);
@@ -1134,9 +1194,11 @@ public class DataParserJTT808 implements IDataParser {
                                     JTT808DataPackUtil.debug("--碰撞侧翻报警触发");
                                     break;
                             }
+                            dataPackMedia.setEventCode(mediaEventCode);
                             // 5.通道 ID
                             mediaChannelId = JTT808DataPackUtil.readByte(buffer);
                             JTT808DataPackUtil.debug("mediaChannelId: " + mediaChannelId);
+                            dataPackMedia.setChannelId(mediaChannelId);
                             // 6.位置信息汇报(0x0200)消息体
                             // 6.1 报警标志位
                             alarmProps = JTT808DataPackUtil.readDWord(buffer);
@@ -1148,10 +1210,12 @@ public class DataParserJTT808 implements IDataParser {
                             dataPackPosition = JTT808DataPackUtil.readPosition(buffer, dataPackObject, statusProps);
                             //--add
                             dataPackTargetList.add(new DataPackTarget(dataPackPosition));
+                            //--多媒体位置
+                            dataPackMedia.setPosition(dataPackPosition);
 
                             // 6.4 解析报警标志位
                             alarmList = JTT808DataPackUtil.detailAlarmProps(alarmProps);
-                            if(null != alarmList && 0 < alarmList.size()) {
+                            if (null != alarmList && 0 < alarmList.size()) {
                                 dataPackAlarm = new DataPackAlarm(dataPackObject);
                                 dataPackAlarm.setPosition(dataPackPosition);
                                 dataPackAlarm.setAlarmList(alarmList);
@@ -1163,13 +1227,19 @@ public class DataParserJTT808 implements IDataParser {
                         // 7.多媒体数据包
                         byte[] mediaBytes = JTT808DataPackUtil.readBytes(buffer, buffer.readableBytes() - 2);
                         System.out.println("mediaBytes: " + mediaBytes);
+                        dataPackMedia.setData(mediaBytes);
+                        //--add
+                        dataPackTargetList.add(new DataPackTarget(dataPackMedia));
                         break;
                     case 0x0805:
                         /* 摄像头立即拍摄命令应答 */
                         System.out.println("## 0x0805 - 摄像头立即拍摄命令应答");
+                        //--结果数据
+                        dataPackResult = new DataPackResult(dataPackObject);
                         // 1.应答流水号
                         responseMsgSeq = JTT808DataPackUtil.readWord(buffer);
                         JTT808DataPackUtil.debug("responseMsgSeq: " + responseMsgSeq);
+                        dataPackResult.setPackId(responseMsgSeq);
                         // 2.结果：0：成功；1：失败；2：通道不支持
                         int mediaResult = JTT808DataPackUtil.readByte(buffer);
                         JTT808DataPackUtil.debug("mediaResult: " + mediaResult);
@@ -1187,31 +1257,52 @@ public class DataParserJTT808 implements IDataParser {
                                 JTT808DataPackUtil.debug("--通道不支持");
                                 break;
                         }
+                        dataPackResult.setResultCode(mediaResult);
                         // 3.多媒体 ID 个数
                         int mediaTotal = JTT808DataPackUtil.readWord(buffer);
                         JTT808DataPackUtil.debug("mediaTotal: " + mediaTotal);
                         // 4.多媒体 ID 列表
-                        if(0 < mediaTotal) {
+                        List<Integer> itemIdList = new ArrayList<>();
+                        if (0 < mediaTotal) {
+                            int itemId;
                             for (int i = 0; i < mediaTotal; i++) {
-                                JTT808DataPackUtil.debug("--" + JTT808DataPackUtil.readBytes(buffer, 4));
+                                // JTT808DataPackUtil.readBytes(buffer, 4)
+                                itemId = new Long(JTT808DataPackUtil.readDWord(buffer)).intValue();
+                                JTT808DataPackUtil.debug("--" + itemId);
+                                itemIdList.add(itemId);
                             }
                         }
+                        dataPackResult.setReusltItems(itemIdList);
+                        //--add
+                        dataPackResult.setResultName("摄像头立即拍摄命令结果");
+                        dataPackTargetList.add(new DataPackTarget(dataPackResult));
                         break;
                     case 0x0802:
                         /* 存储多媒体数据检索应答 */
                         System.out.println("## 0x0802 - 存储多媒体数据检索应答");
+                        //--结果数据
+                        dataPackResult = new DataPackResult(dataPackObject);
                         // 1.应答流水号
                         responseMsgSeq = JTT808DataPackUtil.readWord(buffer);
                         JTT808DataPackUtil.debug("responseMsgSeq: " + responseMsgSeq);
+                        dataPackResult.setPackId(responseMsgSeq);
                         // 2.多媒体数据总项数
                         mediaTotal = JTT808DataPackUtil.readWord(buffer);
                         JTT808DataPackUtil.debug("mediaTotal: " + mediaTotal);
+                        dataPackResult.setResultCode(mediaTotal);
+                        //--add
+                        dataPackResult.setResultName("存储多媒体数据检索结果");
+                        dataPackTargetList.add(new DataPackTarget(dataPackResult));
+
                         // 3.检索项
-                        if(0 < mediaTotal) {
+                        if (0 < mediaTotal) {
                             for (int i = 0; i < mediaTotal; i++) {
+                                //--多媒体数据
+                                dataPackMedia = new DataPackMedia(dataPackObject);
                                 // 3.1 多媒体数据 ID
                                 mediaId = JTT808DataPackUtil.readDWord(buffer);
                                 JTT808DataPackUtil.debug("mediaId: " + mediaId);
+                                dataPackMedia.setmId(mediaId);
                                 // 3.2 多媒体类型：0：图像；1：音频；2：视频；
                                 mediaClassify = JTT808DataPackUtil.readByte(buffer);
                                 JTT808DataPackUtil.debug("mediaClassify: " + mediaClassify);
@@ -1229,9 +1320,11 @@ public class DataParserJTT808 implements IDataParser {
                                         JTT808DataPackUtil.debug("--视频");
                                         break;
                                 }
+                                dataPackMedia.setType(mediaClassify);
                                 // 3.3 通道 ID
                                 mediaChannelId = JTT808DataPackUtil.readByte(buffer);
                                 JTT808DataPackUtil.debug("mediaChannelId: " + mediaChannelId);
+                                dataPackMedia.setChannelId(mediaChannelId);
                                 // 3.4 事件项编码：0：平台下发指令；1：定时动作；2：抢劫报警触发；3：碰撞侧翻报警触发；
                                 mediaEventCode = JTT808DataPackUtil.readByte(buffer);
                                 JTT808DataPackUtil.debug("mediaEventCode: " + mediaEventCode);
@@ -1253,6 +1346,7 @@ public class DataParserJTT808 implements IDataParser {
                                         JTT808DataPackUtil.debug("--碰撞侧翻报警触发");
                                         break;
                                 }
+                                dataPackMedia.setEventCode(mediaEventCode);
                                 // 3.5 位置信息汇报(0x0200)消息体-BYTE[28]
                                 // 表示拍摄或录制的起始时刻的位置基本信息数据
                                 // 3.5.1 报警标志位
@@ -1265,10 +1359,13 @@ public class DataParserJTT808 implements IDataParser {
                                 dataPackPosition = JTT808DataPackUtil.readPosition(buffer, dataPackObject, statusProps);
                                 //--add
                                 dataPackTargetList.add(new DataPackTarget(dataPackPosition));
+                                //--多媒体位置
+                                dataPackMedia.setPosition(dataPackPosition);
+                                dataPackTargetList.add(new DataPackTarget(dataPackMedia));
 
                                 // 3.5.4 解析报警标志位
                                 alarmList = JTT808DataPackUtil.detailAlarmProps(alarmProps);
-                                if(null != alarmList && 0 < alarmList.size()) {
+                                if (null != alarmList && 0 < alarmList.size()) {
                                     dataPackAlarm = new DataPackAlarm(dataPackObject);
                                     dataPackAlarm.setPosition(dataPackPosition);
                                     dataPackAlarm.setAlarmList(alarmList);
@@ -1319,12 +1416,18 @@ public class DataParserJTT808 implements IDataParser {
                     case 0x0A00:
                         /* 终端 RSA 公钥 */
                         System.out.println("## 0x0A00 - 终端 RSA 公钥");
+                        //--RSA数据
+                        DataPackRsa dataPackRsa = new DataPackRsa(dataPackObject);
                         // 1.终端 RSA 公钥{e,n}中的 e
                         long rsaE = JTT808DataPackUtil.readDWord(buffer);
                         JTT808DataPackUtil.debug("rsaE: " + rsaE);
+                        dataPackRsa.setE(rsaE);
                         // 2.RSA 公钥{e,n}中的 n
                         byte[] rsaN = JTT808DataPackUtil.readBytes(buffer, 128);
                         JTT808DataPackUtil.debug("rsaN: " + rsaN);
+                        dataPackRsa.setN(rsaN);
+                        //--add
+                        dataPackTargetList.add(new DataPackTarget(dataPackRsa));
                         break;
                     default:
                         /**
@@ -1348,7 +1451,7 @@ public class DataParserJTT808 implements IDataParser {
     @Override
     public Map<String, Object> getMetaData(ByteBuf buffer) {
         byte[] dataPackBytes = validate(JTT808DataPackUtil.readBytes(buffer, buffer.readableBytes()));
-        if(null != dataPackBytes) {
+        if (null != dataPackBytes) {
             Map<String, Object> metaDataMap = new HashMap<>();
             // 协议版本
             metaDataMap.put("protocol", PROTOCOL_PREFIX + PROTOCOL_VERSION);
